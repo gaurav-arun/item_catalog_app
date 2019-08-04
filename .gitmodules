@@ -1,0 +1,3 @@
+[submodule "bbid"]
+	path = bbid
+	url = git@github.com:grathore07/Bulk-Bing-Image-downloader.git

@@ -46,13 +46,21 @@ def upload():
         # Find a random image from bing if not
         # provided by the user.
         new_image_file_path = bbid.fetch_random_image_from_keyword(item_name)
-        item_img_content = open(new_image_file_path, 'rb')
+        if new_image_file_path:
+            print('Fetching a random image for "{}" from bing'.format(item_name))
+            item_img_content = open(new_image_file_path, 'rb')
+        else:
+            print('Could not find bing image. Using default image.')
+            item_img_content = open('static/images/no-logo.gif', 'rb')
 
+    # Create a new Item and save it in the database.
     new_item = Item(name=item_name, category=item_cat, description=item_desc, image=item_img_content.read())
+    session.add(new_item)
+
+    # Remove temp directory created for bing image
     if os.path.exists('bing'):
         shutil.rmtree('bing')
 
-    session.add(new_item)
     flash('New item "{}" added successfully'.format(item_name))
     session.commit()
 

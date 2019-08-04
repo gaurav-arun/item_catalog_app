@@ -1,0 +1,27 @@
+
+# Deactivate any active conda environment first.
+$ conda deactivate 
+
+# Cd into the directory where you want to create your virtualenv
+$ cd item_catalog
+
+# Create a new virtualenv
+$ virtualenv item_catalog_env
+
+# Activate item_catalog project virtual environment
+$ source item_catalog_env/bin/activate
+
+# Verify python version is 3.5.2
+(item_catalog_env)$ python3 -V
+Python 3.5.2
+
+
+# !!!DONT USE SUDO HERE!!!! 
+# If we use sudo pip3 to install required pacakges
+# they are installed on system leve python even 
+# if virtualenv has been activated.
+
+# Install all required python packages using:
+(item_catalog_env)$ pip3 install -r requirements.txt
+
+

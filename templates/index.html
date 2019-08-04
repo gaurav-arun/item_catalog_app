@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Catalog App</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css"
+        integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <style>
+        li {
+            font-size: 20px;
+        }
+
+        li:hover {
+            background-color: #b8b8b8;
+            border-radius: 4px;
+        }
+
+        /* Login modal css */
+        .form-elegant .font-small {
+            font-size: 0.8rem;
+        }
+
+        .form-elegant .z-depth-1a {
+            -webkit-box-shadow: 0 2px 5px 0 rgba(55, 161, 255, 0.26), 0 4px 12px 0 rgba(121, 155, 254, 0.25);
+            box-shadow: 0 2px 5px 0 rgba(55, 161, 255, 0.26), 0 4px 12px 0 rgba(121, 155, 254, 0.25);
+        }
+
+        .form-elegant .z-depth-1-half,
+        .form-elegant .btn:hover {
+            -webkit-box-shadow: 0 5px 11px 0 rgba(85, 182, 255, 0.28), 0 4px 15px 0 rgba(36, 133, 255, 0.15);
+            box-shadow: 0 5px 11px 0 rgba(85, 182, 255, 0.28), 0 4px 15px 0 rgba(36, 133, 255, 0.15);
+        }
+
+        .form-elegant .modal-header {
+            border-bottom: none;
+        }
+
+        .modal-dialog .form-elegant .btn .fab {
+            color: #2196f3 !important;
+        }
+
+        .form-elegant .modal-body,
+        .form-elegant .modal-footer {
+            font-weight: 400;
+        }
+    </style>
+
+    <script type="text/javascript">
+        function HandleBrowseClick(input_image) {
+            var fileinput = document.getElementById(input_image);
+            fileinput.click();
+        }
+
+        function EditItemModalWindow(button) {
+            console.log('button is : ' + button);
+            itemId = button.dataset.editid;
+            console.log('item id is : ' + itemId);
+            item_img_id = '#' + itemId + '_img';
+            item_title_id = '#' + itemId + '_tit';
+            item_cat_id = '#' + itemId + '_cat';
+            item_desc_id = '#' + itemId + '_desc';
+            $('#add-item-form')[0].action = "{{ url_for('upload') }}" //'/edit-item/' + itemId
+            $('#add-item-image-preview')[0].src = $(item_img_id)[0].src
+            $('#add-item-tit').val($(item_title_id)[0].innerText)
+            $('#add-item-cat').val($(item_cat_id)[0].innerText)
+            $('#add-item-desc').val($(item_desc_id)[0].innerText)
+            $('#addItemModal').modal("show")
+        }
+
+        function resetAddItemModal() {
+            $('#add-item-form')[0].action = "{{ url_for('upload') }}";
+            $('#add-item-image-preview')[0].src = "{{ url_for('static', filename='images/no-logo.gif') }}";
+            $('#add-item-tit').val('');
+            $('#add-item-cat').val('');
+            $('#add-item-desc').val('');
+        }
+
+        // Register for hide modal event and clear all  fields.
+        $(document).ready(function () {
+            $("#addItemModal").on('hide.bs.modal', function () {
+                console.log('Hide event: Clearing add item modal')
+                resetAddItemModal();
+            });
+
+            $("#add-item-btn").click(function () {
+                console.log('Submitting form...')
+                $('#add-item-form').submit()
+            });
+        });     
+    </script>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-sm sticky-top shadow" style="background-color: #3f4959 ">
+        <div class="navbar-brand fas fa-scroll" style="color: white; font-size: xx-large; height: 50px; width: 50px">
+            CatalogApp</div>
+        <div style="width:100%; margin-left: 13rem; margin-right:2.5rem">
+            <button class="btn btn-light" data-toggle="modal" data-target="#addItemModal">
+                <span class="fas fa-plus p-1"></span>Add New Item
+            </button>
+            <button class="btn btn-outline-light float-right" data-toggle="modal" data-target="#loginModalForm"><span
+                    class="fas fa-sign-in-alt p-1"></span>Login</button>
+        </div>
+    </nav>
+    <!-- The Add New Item Modal -->
+    <div class="modal fade" id="addItemModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Add New Item</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div class="container">
+                        <form method="POST" id="add-item-form" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+                            <div class="form-group text-center">
+                                <img class="img-thumbnail" id="add-item-image-preview"
+                                    style="margin-top: 2px; width: 25rem; height: 25rem; border: none; border-radius: 0.5em"
+                                    src="{{ url_for('static', filename='images/no-logo.gif') }}" alt="No Image">
+
+                                <input style="display:none" id="input-image-hidden" name="item_img"
+                                    onchange="document.getElementById('add-item-image-preview').src = window.URL.createObjectURL(this.files[0])"
+                                    type="file" accept="image/jpeg, image/png">
+
+                                <button class="btn btn-outline-dark btn-sm" id="add-item-upload-btn"
+                                    onclick="HandleBrowseClick('input-image-hidden'); return false;"> 
+                                    Upload a new image</button>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="add-item-tit">Name</label>
+                                <input type="text" class="form-control" id="add-item-tit" name="item_name">
+                                <small id="name-help" class="form-text text-muted">Item name should be unique within a category.</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="add-item-cat">Category</label>
+                                <input type="text" class="form-control" id="add-item-cat" name="item_cat">
+                                <small id="cat-help" class="form-text text-muted">A new category will be created if it does not exist.</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="add-item-desc">Description</label>
+                                <textarea class="form-control" id="add-item-desc" rows="3" name="item_desc"></textarea>
+                                <small id="name-help" class="form-text text-muted">Provide a description of this item.</small>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button id="add-item-btn" type="button" class="btn btn-outline-dark"
+                        data-dismiss="modal">Add</button>
+                    <button id="close-item-btn" type="button" class="btn btn-outline-dark"
+                        data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal: https://mdbootstrap.com/docs/jquery/modals/forms/ -->
+    <div class="modal fade" id="loginModalForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <!--Login Content-->
+            <div class="modal-content form-elegant">
+                <!--Login Header-->
+                <div class="modal-header text-center">
+                    <h3 class="modal-title w-100 dark-grey-text font-weight-bold my-3 ml-4" id="myModalLabel">
+                        <strong>Sign
+                            in</strong></h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <!--Login Body-->
+                <div class="modal-body mx-4">
+                    <div class="row my-3 d-flex justify-content-center">
+                        <!--Google +-->
+                        <button type="button" class="btn btn-lg btn-white btn-rounded mr-md-5 z-depth-1a"><i
+                                class="fab fa-google"></i></button>
+                        <!--Facebook-->
+                        <button type="button" class="btn btn-lg btn-white btn-rounded z-depth-1a"><i
+                                class="fab fa-facebook-f text-center px-1"></i></button>
+                    </div>
+                </div>
+                <!--Footer-->
+                <div class="modal-footer mx-5 pt-3 mb-1">
+                    <p class="font-small grey-text d-flex justify-content-end">Login using Google or Facebook</p>
+                </div>
+            </div>
+            <!--/.Content-->
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row bg-light">
+            <nav class="col-sm-3 p-3 bg-light"
+                style="height: max-height; border-right: 0px solid gray; overflow-y: scroll;">
+                <h2>Categories</h2>
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section1">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#section2">Section 2 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section3">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section4">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="#section1">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section2">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section3">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section4">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="#section1">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section2">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section3">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section4">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="#section1">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section2">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section3">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section4">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="#section1">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section2">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section3">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#section4">Section 1 <span
+                                class="badge badge-secondary float-right">10</span></a>
+                    </li>
+
+                </ul>
+            </nav>
+            <div class="col-sm-9 p-3">
+                <h2 class="font-weight-bol d-flex justify-content-center">Selected Category</h2>
+                <div class="d-inline-flex flex-wrap justify-content-center">
+                    <div class="card p-3 m-3 shadow" id='unique_id_1' style="width: 25em">
+                        <img class="card-img-top img-thumbnail" id='unique_id_1_img' src="{{ url_for('static', filename='images/skateboard.jpeg') }}" alt=""
+                            style="margin-top: 2px; height: 25rem; border: none; border-radius: 0.5em">
+                        <div class="card-body px-2 pb-0">
+                            <h3 class="card-title title mb-0" id='unique_id_1_tit'>Skatemaster MX99 Pro</h3>
+
+                            <h5 class="card-title category small font-italic" id='unique_id_1_cat'>Skateboard</h5>
+
+                            <p class="card-text text-justify" id='unique_id_1_desc'>
+                                The extension operates in two modes -
+                                it can launch an instance of Chrome
+                                navigated to your app, or it can attach
+                                to a running instance of Chrome. Both
+                                modes requires you to be serving your
+                                web application from local web server,
+                                which is started from either a VS Code
+                                task or from your command-line. Using
+                                the url parameter you simply tell VS
+                                Code which URL to either open or launch
+                                in Chrome.
+                            </p>
+
+                            <div style="display:block">
+                                <button class="pl-0 card-title btn btn-link btn-sm" data-editid='unique_id_1'
+                                    onclick="EditItemModalWindow(this)">Edit</button>
+                                <button class="pl-0 card-title btn btn-link btn-sm " data-deleteid='unique_id_1'
+                                    onclick="DeleteItemModalWindow(this)">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-3 m-3 shadow" id='unique_id_2' style="width: 25rem">
+                        <img class="card-img-top img-thumbnail" id='unique_id_2_img' src="{{ url_for('static', filename='images/skateboard_2.jpeg') }}" alt=""
+                            style="margin-top: 2px; height: 25rem; border: none; border-radius: 0.5em">
+                        <div class="card-body px-2 pb-0">
+                            <h3 class="card-title title mb-0" id='unique_id_2_tit'>Skatemaster Pro</h3>
+
+                            <h5 class="card-title category small font-italic" id='unique_id_2_cat'>Skateboard</h5>
+
+                            <p class="card-text text-justify" id='unique_id_2_desc'>
+                                The extension operates in two modes -
+                                it can launch an instance of Chrome
+                                navigated to your app, or it can attach
+                                Code which URL to either open or launch
+                                in Chrome.
+                            </p>
+
+                            <div style="display:block">
+                                <button class="pl-0 card-title btn btn-link btn-sm" data-editid="unique_id_2"
+                                    onclick="EditItemModalWindow(this)">Edit</button>
+                                <button class="pl-0 card-title btn btn-link btn-sm" data-deleteid="unique_id_2"
+                                    onclick="DeleteItemModalWindow(this)">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-3 m-3 shadow" style="width: 25rem">
+                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_3.jpg') }}" alt=""
+                            style="margin-top: 2px; height: 25rem">
+                        <div class="card-body">
+                            <h4 class="card-title">Title</h4>
+                            <span class="pl-0 card-title btn btn-link btn-sm">Edit</span>
+                            <span class="pl-0 card-title btn btn-link btn-sm">Delete</span>
+
+                            <p class="card-text">
+                                The extension operates in two modes -
+                                it can launch an instance of Chrome
+                                navigated to your app, or it can attach
+                                to a running instance of Chrome. Both
+
+                            </p>
+                            <div class="align-self-end" style="display:block">
+                                <button class="pl-0 card-title btn btn-link btn-sm">Edit</button>
+                                <button class="pl-0 card-title btn btn-link btn-sm ">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-3 m-3 shadow" style="width: 25rem">
+                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_4.jpg') }}" alt=""
+                            style="margin-top: 2px; height: 25rem">
+                        <div class="card-body">
+                            <h4 class="card-title">Title</h4><span
+                                class="pl-0 card-title btn btn-link btn-sm">Edit</span> <span
+                                class="pl-0 card-title btn btn-link btn-sm">Delete</span>
+                            <p class="card-text">
+                                The extension operates in two modes -
+                                it can launch an instance of Chrome
+                                navigated to your app, or it can attach
+                                to a running instance of Chrome. Both
+                                modes requires you to be serving your
+                                web application from local web server,
+                                which is started from either a VS Code
+
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card p-3 m-3 shadow" style="width: 25rem">
+                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_5.jpg') }}" alt=""
+                            style="margin-top: 2px; height: 25rem">
+                        <div class="card-body">
+                            <h4 class="card-title">Title</h4><span
+                                class="pl-0 card-title btn btn-link btn-sm">Edit</span> <span
+                                class="pl-0 card-title btn btn-link btn-sm">Delete</span>
+                            <p class="card-text">
+                                The extension operates in two modes -
+                                it can launch an instance of Chrome
+                                navigated to your app, or it can attach
+                                to a running instance of Chrome. Both
+                                modes requires you to be serving your
+                                web application from local web server,
+                                which is started from either a VS Code
+                                task or from your command-line. Using
+                                the url parameter you simply tell VS
+                                Code which URL to either open or launch
+                                in Chrome.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card p-3 m-3 shadow" style="width: 25rem">
+                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_6.jpg') }}" alt=""
+                            style="margin-top: 2px; height: 25rem">
+                        <div class="card-body">
+                            <h4 class="card-title">Title</h4>
+                            <span class="pl-0 card-title btn btn-link btn-sm">Edit</span>
+                            <span class="pl-0 card-title btn btn-link btn-sm">Delete</span>
+                            <p class="card-text">
+                                The extension operates in two modes -
+                                it can launch an instance of Chrome
+                                navigated to your app, or it can attach
+                                to a running instance of Chrome. Both
+                                modes requires you to be serving your
+                                web application from local web server,
+                                which is started from either a VS Code
+                                task or from your command-line. Using
+                                the url parameter you simply tell VS
+                                Code which URL to either open or launch
+                                in Chrome.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card p-3 m-3 shadow" style="width: 25rem">
+                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_7.jpg') }}" alt=""
+                            style="margin-top: 2px; height: 25rem">
+                        <div class="card-body">
+                            <h4 class="card-title">Title</h4><span
+                                class="pl-0 card-title btn btn-link btn-sm">Edit</span> <span
+                                class="pl-0 card-title btn btn-link btn-sm">Delete</span>
+                            <p class="card-text">
+                                The extension operates in two modes -
+                                it can launch an instance of Chrome
+                                navigated to your app, or it can attach
+                                to a running instance of Chrome. Both
+                                modes requires you to be serving your
+                                web application from local web server,
+                                which is started from either a VS Code
+                                task or from your command-line. Using
+                                the url parameter you simply tell VS
+                                Code which URL to either open or launch
+                                in Chrome.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card p-3 m-3 shadow" style="width: 25rem">
+                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_8.jpg') }}" alt=""
+                            style="margin-top: 2px; height: 25rem">
+                        <div class="card-body">
+                            <h4 class="card-title">Title</h4><span
+                                class="pl-0 card-title btn btn-link btn-sm">Edit</span> <span
+                                class="pl-0 card-title btn btn-link btn-sm">Delete</span>
+                            <p class="card-text">
+                                The extension operates in two modes -
+                                it can launch an instance of Chrome
+                                navigated to your app, or it can attach
+                                to a running instance of Chrome. Both
+                                modes requires you to be serving your
+                                web application from local web server,
+                                which is started from either a VS Code
+                                task or from your command-line. Using
+                                the url parameter you simply tell VS
+                                Code which URL to either open or launch
+                                in Chrome.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card p-3 m-3 shadow" style="width: 25rem">
+                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_9.jpg') }}" alt=""
+                            style="margin-top: 2px; height: 25rem">
+                        <div class="card-body">
+                            <h4 class="card-title">Title</h4>
+                            <span class="pl-0 card-title btn btn-link btn-sm">Edit</span>
+                            <span class="pl-0 card-title btn btn-link btn-sm">Delete</span>
+                            <p class="card-text">
+                                The extension operates in two modes -
+                                it can launch an instance of Chrome
+                                navigated to your app, or it can attach
+                                to a running instance of Chrome. Both
+                                modes requires you to be serving your
+                                web application from local web server,
+                                which is started from either a VS Code
+                                task or from your command-line. Using
+                                the url parameter you simply tell VS
+                                Code which URL to either open or launch
+                                in Chrome.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card p-3 m-3 shadow" style="width: 25rem">
+                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard.jpeg') }}" alt=""
+                            style="margin-top: 2px; height: 25rem">
+                        <div class="card-body">
+                            <h4 class="card-title">Title</h4>
+                            <span class="pl-0 card-title btn btn-link btn-sm">Edit</span>
+                            <span class="pl-0 card-title btn btn-link btn-sm">Delete</span>
+                            <p class="card-text">
+                                The extension operates in two modes -
+                                it can launch an instance of Chrome
+                                navigated to your app, or it can attach
+                                to a running instance of Chrome. Both
+                                modes requires you to be serving your
+                                web application from local web server,
+                                which is started from either a VS Code
+                                task or from your command-line. Using
+                                the url parameter you simply tell VS
+                                Code which URL to either open or launch
+                                in Chrome.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>

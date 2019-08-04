@@ -45,9 +45,9 @@ def upload():
     else:
         # Find a random image from bing if not
         # provided by the user.
+        print('Fetching a random image for "{}" from bing'.format(item_name))
         new_image_file_path = bbid.fetch_random_image_from_keyword(item_name)
         if new_image_file_path:
-            print('Fetching a random image for "{}" from bing'.format(item_name))
             item_img_content = open(new_image_file_path, 'rb')
         else:
             print('Could not find bing image. Using default image.')

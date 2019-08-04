@@ -5,7 +5,9 @@ from flask_uploads import UploadSet, configure_uploads, IMAGES
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, User, Item
-import google_image_scraper
+from bbid import bbid
+import os
+import shutil
 
 import utils
 
@@ -33,17 +35,23 @@ def login():
 
 @app.route('/add-new-item', methods=['POST'])
 def upload():
-    item_img = request.files['item_img'].read()
+    item_img = request.files['item_img']
     item_name = request.form['item_name']
     item_cat = request.form['item_cat']
     item_desc = request.form['item_desc']
 
-    # Find a random image from google if not
-    # provided by the user.
-    if not item_img:
-        item_img = google_image_scraper.get_random_image(item_name)
+    if item_img:
+        item_img_content = item_img.read()
+    else:
+        # Find a random image from bing if not
+        # provided by the user.
+        new_image_file_path = bbid.fetch_random_image_from_keyword(item_name)
+        item_img_content = open(new_image_file_path, 'rb')
 
-    new_item = Item(name=item_name, category=item_cat, description=item_desc, image=item_img)
+    new_item = Item(name=item_name, category=item_cat, description=item_desc, image=item_img_content.read())
+    if os.path.exists('bing'):
+        shutil.rmtree('bing')
+
     session.add(new_item)
     flash('New item "{}" added successfully'.format(item_name))
     session.commit()

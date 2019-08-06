@@ -11,89 +11,104 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-    <style>
-        li {
-            font-size: 20px;
-        }
-
-        li:hover {
-            background-color: #b8b8b8;
-            border-radius: 4px;
-        }
-
-        /* Login modal css */
-        .form-elegant .font-small {
-            font-size: 0.8rem;
-        }
-
-        .form-elegant .z-depth-1a {
-            -webkit-box-shadow: 0 2px 5px 0 rgba(55, 161, 255, 0.26), 0 4px 12px 0 rgba(121, 155, 254, 0.25);
-            box-shadow: 0 2px 5px 0 rgba(55, 161, 255, 0.26), 0 4px 12px 0 rgba(121, 155, 254, 0.25);
-        }
-
-        .form-elegant .z-depth-1-half,
-        .form-elegant .btn:hover {
-            -webkit-box-shadow: 0 5px 11px 0 rgba(85, 182, 255, 0.28), 0 4px 15px 0 rgba(36, 133, 255, 0.15);
-            box-shadow: 0 5px 11px 0 rgba(85, 182, 255, 0.28), 0 4px 15px 0 rgba(36, 133, 255, 0.15);
-        }
-
-        .form-elegant .modal-header {
-            border-bottom: none;
-        }
-
-        .modal-dialog .form-elegant .btn .fab {
-            color: #2196f3 !important;
-        }
-
-        .form-elegant .modal-body,
-        .form-elegant .modal-footer {
-            font-weight: 400;
-        }
-    </style>
-
-    <script type="text/javascript">
-        function HandleBrowseClick(input_image) {
-            var fileinput = document.getElementById(input_image);
-            fileinput.click();
-        }
-
-        function EditItemModalWindow(button) {
-            console.log('button is : ' + button);
-            itemId = button.dataset.editid;
-            console.log('item id is : ' + itemId);
-            item_img_id = '#' + itemId + '_img';
-            item_title_id = '#' + itemId + '_tit';
-            item_cat_id = '#' + itemId + '_cat';
-            item_desc_id = '#' + itemId + '_desc';
-            $('#add-item-form')[0].action = "{{ url_for('upload') }}" //'/edit-item/' + itemId
-            $('#add-item-image-preview')[0].src = $(item_img_id)[0].src
-            $('#add-item-tit').val($(item_title_id)[0].innerText)
-            $('#add-item-cat').val($(item_cat_id)[0].innerText)
-            $('#add-item-desc').val($(item_desc_id)[0].innerText)
-            $('#addItemModal').modal("show")
-        }
-
-        function resetAddItemModal() {
-            $('#add-item-form')[0].action = "{{ url_for('upload') }}";
-            $('#add-item-image-preview')[0].src = "{{ url_for('static', filename='images/no-logo.gif') }}";
-            $('#add-item-tit').val('');
-            $('#add-item-cat').val('');
-            $('#add-item-desc').val('');
-        }
-
-        // Register for hide modal event and clear all  fields.
-        $(document).ready(function () {
-            $("#addItemModal").on('hide.bs.modal', function () {
-                console.log('Hide event: Clearing add item modal')
-                resetAddItemModal();
+    <!-- Required for google sign in -->
+    <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+    <script>
+        function start() {
+            gapi.load('auth2', function () {
+                auth2 = gapi.auth2.init({
+                    client_id: '109303328989-csn309shgi2vq5idl6gtda1e8s1d5hoh.apps.googleusercontent.com',
+                    // Scopes to request in addition to 'profile' and 'email'
+                    scope: 'openid email'
+                });
             });
-
-            $("#add-item-btn").click(function () {
-                console.log('Submitting form...')
-                $('#add-item-form').submit()
-            });
-        });     
+        }
     </script>
+</head>
+
+<style>
+    li {
+        font-size: 20px;
+    }
+
+    li:hover {
+        background-color: #b8b8b8;
+        border-radius: 4px;
+    }
+
+    /* Login modal css */
+    .form-elegant .font-small {
+        font-size: 0.8rem;
+    }
+
+    .form-elegant .z-depth-1a {
+        -webkit-box-shadow: 0 2px 5px 0 rgba(55, 161, 255, 0.26), 0 4px 12px 0 rgba(121, 155, 254, 0.25);
+        box-shadow: 0 2px 5px 0 rgba(55, 161, 255, 0.26), 0 4px 12px 0 rgba(121, 155, 254, 0.25);
+    }
+
+    .form-elegant .z-depth-1-half,
+    .form-elegant .btn:hover {
+        -webkit-box-shadow: 0 5px 11px 0 rgba(85, 182, 255, 0.28), 0 4px 15px 0 rgba(36, 133, 255, 0.15);
+        box-shadow: 0 5px 11px 0 rgba(85, 182, 255, 0.28), 0 4px 15px 0 rgba(36, 133, 255, 0.15);
+    }
+
+    .form-elegant .modal-header {
+        border-bottom: none;
+    }
+
+    .modal-dialog .form-elegant .btn .fab {
+        color: #2196f3 !important;
+    }
+
+    .form-elegant .modal-body,
+    .form-elegant .modal-footer {
+        font-weight: 400;
+    }
+</style>
+
+<script type="text/javascript">
+    function HandleBrowseClick(input_image) {
+        var fileinput = document.getElementById(input_image);
+        fileinput.click();
+    }
+
+    function EditItemModalWindow(button) {
+        console.log('button is : ' + button);
+        itemId = button.dataset.editid;
+        console.log('item id is : ' + itemId);
+        item_img_id = '#' + itemId + '_img';
+        item_title_id = '#' + itemId + '_tit';
+        item_cat_id = '#' + itemId + '_cat';
+        item_desc_id = '#' + itemId + '_desc';
+        $('#add-item-form')[0].action = "{{ url_for('upload') }}" //'/edit-item/' + itemId
+        $('#add-item-image-preview')[0].src = $(item_img_id)[0].src
+        $('#add-item-tit').val($(item_title_id)[0].innerText)
+        $('#add-item-cat').val($(item_cat_id)[0].innerText)
+        $('#add-item-desc').val($(item_desc_id)[0].innerText)
+        $('#addItemModal').modal("show")
+    }
+
+    function resetAddItemModal() {
+        $('#add-item-form')[0].action = "{{ url_for('upload') }}";
+        $('#add-item-image-preview')[0].src = "{{ url_for('static', filename='images/no-logo.gif') }}";
+        $('#add-item-tit').val('');
+        $('#add-item-cat').val('');
+        $('#add-item-desc').val('');
+    }
+
+    // Register for hide modal event and clear all  fields.
+    $(document).ready(function () {
+        $("#addItemModal").on('hide.bs.modal', function () {
+            console.log('Hide event: Clearing add item modal')
+            resetAddItemModal();
+        });
+
+        $("#add-item-btn").click(function () {
+            console.log('Submitting form...')
+            $('#add-item-form').submit()
+        });
+    });     
+</script>
 </head>
 
 <body>
@@ -104,8 +119,28 @@
             <button class="btn btn-light" data-toggle="modal" data-target="#addItemModal">
                 <span class="fas fa-plus p-1"></span>Add New Item
             </button>
-            <button class="btn btn-outline-light float-right" data-toggle="modal" data-target="#loginModalForm"><span
-                    class="fas fa-sign-in-alt p-1"></span>Login</button>
+            <!-- <button id="loginLogoutBtn"class="btn btn-outline-light float-right" data-toggle="modal" data-target="#loginModalForm"><span
+                    class="fas fa-sign-in-alt p-1"></span>Login</button> -->
+            <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
+                data-state="login"><span class="fas fa-sign-in-alt p-1"></span>Login</button>
+            <script>
+                // This function handles login and logout logic for
+                // both Google and Facebook login.
+                function handleLogin(button) {
+                    console.log("state:" + button.dataset.state)
+                    if (button.dataset.state === "login") {
+                        $('#loginModalForm').modal("toggle")
+                    }
+                    else {
+                        $.get("/disconnect", function (data, status) {
+                            console.log("Data: " + data + "\nStatus: " + status);
+                            $('#loginLogoutBtn').html("<span class=\"fas fa-sign-in-alt p-1\"></span>Login")
+                            $('#loginLogoutBtn')[0].dataset.state = 'login'
+                        });
+                    }
+
+                }
+            </script>
         </div>
     </nav>
     <!-- The Add New Item Modal -->
@@ -122,7 +157,8 @@
                 <!-- Modal body -->
                 <div class="modal-body">
                     <div class="container">
-                        <form method="POST" id="add-item-form" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+                        <form method="POST" id="add-item-form" action="{{ url_for('upload') }}"
+                            enctype="multipart/form-data">
                             <div class="form-group text-center">
                                 <img class="img-thumbnail" id="add-item-image-preview"
                                     style="margin-top: 2px; width: 25rem; height: 25rem; border: none; border-radius: 0.5em"
@@ -133,24 +169,27 @@
                                     type="file" accept="image/jpeg, image/png">
 
                                 <button class="btn btn-outline-dark btn-sm" id="add-item-upload-btn"
-                                    onclick="HandleBrowseClick('input-image-hidden'); return false;"> 
+                                    onclick="HandleBrowseClick('input-image-hidden'); return false;">
                                     Upload a new image</button>
                             </div>
 
                             <div class="form-group">
                                 <label for="add-item-tit">Name</label>
                                 <input type="text" class="form-control" id="add-item-tit" name="item_name">
-                                <small id="name-help" class="form-text text-muted">Item name should be unique within a category.</small>
+                                <small id="name-help" class="form-text text-muted">Item name should be unique within a
+                                    category.</small>
                             </div>
                             <div class="form-group">
                                 <label for="add-item-cat">Category</label>
                                 <input type="text" class="form-control" id="add-item-cat" name="item_cat">
-                                <small id="cat-help" class="form-text text-muted">A new category will be created if it does not exist.</small>
+                                <small id="cat-help" class="form-text text-muted">A new category will be created if it
+                                    does not exist.</small>
                             </div>
                             <div class="form-group">
                                 <label for="add-item-desc">Description</label>
                                 <textarea class="form-control" id="add-item-desc" rows="3" name="item_desc"></textarea>
-                                <small id="name-help" class="form-text text-muted">Provide a description of this item.</small>
+                                <small id="name-help" class="form-text text-muted">Provide a description of this
+                                    item.</small>
                             </div>
                         </form>
                     </div>
@@ -186,12 +225,53 @@
                 <!--Login Body-->
                 <div class="modal-body mx-4">
                     <div class="row my-3 d-flex justify-content-center">
-                        <!--Google +-->
-                        <button type="button" class="btn btn-lg btn-white btn-rounded mr-md-5 z-depth-1a"><i
+                        <!--Google -->
+                        <button id="googleSignInButton" type="button"
+                            class="btn btn-lg btn-white btn-rounded mr-md-5 z-depth-1a"><i
                                 class="fab fa-google"></i></button>
+                        <script>
+                            $('#googleSignInButton').click(function () {
+                                // signInCallback defined in step 6.
+                                auth2.grantOfflineAccess().then(signInCallback);
+                            });
+
+                            function signInCallback(authResult) {
+                                if (authResult['code']) {
+
+                                    // // Hide the sign-in button now that the user is authorized, for example:
+                                    // $('#signinButton').attr('style', 'display: none');
+                                    console.log('Executing Sigincallback ...')
+                                    $('#loginModalForm').modal("hide")
+                                    $('#loginLogoutBtn').html("<span class=\"fas fa-sign-out-alt p-1\"></span>Logout")
+                                    // Set the button state to logout so that when user clicks on it
+                                    // next time logout is triggered.
+                                    $('#loginLogoutBtn')[0].dataset.state = 'logout'
+
+                                    // Send the code to the server
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '/gconnect?state={{STATE}}',
+                                        // Always include an `X-Requested-With` header in every AJAX request,
+                                        // to protect against CSRF attacks.
+                                        headers: {
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        },
+                                        contentType: 'application/octet-stream; charset=utf-8',
+                                        // success: function (result) {
+                                        //     console.log('Successfully logged in')
+                                        // },
+                                        processData: false,
+                                        data: authResult['code']
+                                    });
+                                } else {
+                                    console.log("Server side error.")
+                                }
+                            }
+                        </script>
                         <!--Facebook-->
-                        <button type="button" class="btn btn-lg btn-white btn-rounded z-depth-1a"><i
-                                class="fab fa-facebook-f text-center px-1"></i></button>
+                        <button type="button" class="btn btn-lg btn-white btn-rounded z-depth-1a fb-login-button"
+                            data-scope="public_profile,email"  onclick="sendTokenToServer(this)">
+                            <i class="fab fa-facebook-f text-center px-1"></i></button>
                     </div>
                 </div>
                 <!--Footer-->
@@ -296,7 +376,8 @@
                 <h2 class="font-weight-bol d-flex justify-content-center">Selected Category</h2>
                 <div class="d-inline-flex flex-wrap justify-content-center">
                     <div class="card p-3 m-3 shadow" id='unique_id_1' style="width: 25em">
-                        <img class="card-img-top img-thumbnail" id='unique_id_1_img' src="{{ url_for('static', filename='images/skateboard.jpeg') }}" alt=""
+                        <img class="card-img-top img-thumbnail" id='unique_id_1_img'
+                            src="{{ url_for('static', filename='images/skateboard.jpeg') }}" alt=""
                             style="margin-top: 2px; height: 25rem; border: none; border-radius: 0.5em">
                         <div class="card-body px-2 pb-0">
                             <h3 class="card-title title mb-0" id='unique_id_1_tit'>Skatemaster MX99 Pro</h3>
@@ -326,7 +407,8 @@
                         </div>
                     </div>
                     <div class="card p-3 m-3 shadow" id='unique_id_2' style="width: 25rem">
-                        <img class="card-img-top img-thumbnail" id='unique_id_2_img' src="{{ url_for('static', filename='images/skateboard_2.jpeg') }}" alt=""
+                        <img class="card-img-top img-thumbnail" id='unique_id_2_img'
+                            src="{{ url_for('static', filename='images/skateboard_2.jpeg') }}" alt=""
                             style="margin-top: 2px; height: 25rem; border: none; border-radius: 0.5em">
                         <div class="card-body px-2 pb-0">
                             <h3 class="card-title title mb-0" id='unique_id_2_tit'>Skatemaster Pro</h3>
@@ -350,7 +432,8 @@
                         </div>
                     </div>
                     <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_3.jpg') }}" alt=""
+                        <img class="card-img-top img-thumbnail"
+                            src="{{ url_for('static', filename='images/skateboard_3.jpg') }}" alt=""
                             style="margin-top: 2px; height: 25rem">
                         <div class="card-body">
                             <h4 class="card-title">Title</h4>
@@ -371,7 +454,8 @@
                         </div>
                     </div>
                     <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_4.jpg') }}" alt=""
+                        <img class="card-img-top img-thumbnail"
+                            src="{{ url_for('static', filename='images/skateboard_4.jpg') }}" alt=""
                             style="margin-top: 2px; height: 25rem">
                         <div class="card-body">
                             <h4 class="card-title">Title</h4><span
@@ -390,7 +474,8 @@
                         </div>
                     </div>
                     <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_5.jpg') }}" alt=""
+                        <img class="card-img-top img-thumbnail"
+                            src="{{ url_for('static', filename='images/skateboard_5.jpg') }}" alt=""
                             style="margin-top: 2px; height: 25rem">
                         <div class="card-body">
                             <h4 class="card-title">Title</h4><span
@@ -412,7 +497,8 @@
                         </div>
                     </div>
                     <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_6.jpg') }}" alt=""
+                        <img class="card-img-top img-thumbnail"
+                            src="{{ url_for('static', filename='images/skateboard_6.jpg') }}" alt=""
                             style="margin-top: 2px; height: 25rem">
                         <div class="card-body">
                             <h4 class="card-title">Title</h4>
@@ -434,7 +520,8 @@
                         </div>
                     </div>
                     <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_7.jpg') }}" alt=""
+                        <img class="card-img-top img-thumbnail"
+                            src="{{ url_for('static', filename='images/skateboard_7.jpg') }}" alt=""
                             style="margin-top: 2px; height: 25rem">
                         <div class="card-body">
                             <h4 class="card-title">Title</h4><span
@@ -456,7 +543,8 @@
                         </div>
                     </div>
                     <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_8.jpg') }}" alt=""
+                        <img class="card-img-top img-thumbnail"
+                            src="{{ url_for('static', filename='images/skateboard_8.jpg') }}" alt=""
                             style="margin-top: 2px; height: 25rem">
                         <div class="card-body">
                             <h4 class="card-title">Title</h4><span
@@ -478,7 +566,8 @@
                         </div>
                     </div>
                     <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard_9.jpg') }}" alt=""
+                        <img class="card-img-top img-thumbnail"
+                            src="{{ url_for('static', filename='images/skateboard_9.jpg') }}" alt=""
                             style="margin-top: 2px; height: 25rem">
                         <div class="card-body">
                             <h4 class="card-title">Title</h4>
@@ -500,7 +589,8 @@
                         </div>
                     </div>
                     <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail" src="{{ url_for('static', filename='images/skateboard.jpeg') }}" alt=""
+                        <img class="card-img-top img-thumbnail"
+                            src="{{ url_for('static', filename='images/skateboard.jpeg') }}" alt=""
                             style="margin-top: 2px; height: 25rem">
                         <div class="card-body">
                             <h4 class="card-title">Title</h4>

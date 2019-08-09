@@ -29,7 +29,7 @@ CLIENT_SECRETS_FILE = 'client_secrets.json'
 CLIENT_ID = json.loads(open(CLIENT_SECRETS_FILE, 'r').read())['web']['client_id']
 
 # Connect to the database and create database session
-engine = create_engine('sqlite:///db/itemcatalog.db')
+engine = create_engine('sqlite:///db/itemcatalog.db', connect_args={'check_same_thread': False})
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
@@ -41,9 +41,12 @@ session = DBSession()
 def login():
     state = utils.get_random_state()
     login_session['state'] = state
-    profile_pic_url = login_session.get('picture', 'static/images/no-logo.gif')
+    return render_template('index.html', STATE=state, LOGIN_SESSION=login_session)
 
-    return render_template('index.html', STATE=state, LOGIN_SESSION=login_session, PROFILE_PIC_URL=profile_pic_url)
+
+@app.route('/login_success')
+def login_success():
+    return render_template('index.html', STATE=login_session['state'], LOGIN_SESSION=login_session)
 
 
 @app.route('/add-new-item', methods=['POST'])
@@ -67,7 +70,12 @@ def upload():
             item_img_content = open('static/images/no-logo.gif', 'rb')
 
     # Create a new Item and save it in the database.
-    new_item = Item(name=item_name, category=item_cat, description=item_desc, image=item_img_content.read())
+    user_id = getUserID(login_session["email"])
+    new_item = Item(name=item_name,
+                    category=item_cat,
+                    description=item_desc,
+                    image=item_img_content.read(),
+                    user_id=user_id)
     session.add(new_item)
     session.commit()
 
@@ -78,50 +86,6 @@ def upload():
     flash('New item "{}" added successfully'.format(item_name))
 
     return redirect(url_for('login'))
-
-
-# @app.route('/gconnect', methods=['POST'])
-# def gconnect():
-#     # Validate state token
-#     if request.args.get('state') != login_session['state']:
-#         response = make_response(json.dumps('Invalid state parameter.'), 401)
-#         response.headers['Content-Type'] = 'application/json'
-#         return response
-#
-#     if not request.headers.get('X-Requested-With'):
-#         response = make_response(json.dumps('Invalid headers'), 403)
-#         response.headers['Content-Type'] = 'application/json'
-#         return response
-#
-#     # Obtain authorization code
-#     auth_code = request.data
-#
-#     credentials = client.credentials_from_clientsecrets_and_code(
-#         CLIENT_SECRETS_FILE,
-#         ['openid', 'profile', 'email'],
-#         auth_code)
-#
-#
-#     # Store the access token in the session for later use.
-#     login_session['access_token'] = credentials.access_token
-#     login_session['userid'] = credentials.id_token['sub']
-#     login_session['email'] = credentials.id_token['email']
-#     login_session['picture'] = credentials.id_token['picture']
-#
-#     print('username : ', login_session['userid'])
-#     print('picture  : ', login_session['picture'])
-#     print('email    : ', login_session['email'])
-#
-#     output = ''
-#     output += '<h1>Welcome, '
-#     output += login_session['userid']
-#     output += '!</h1>'
-#     output += '<img src="'
-#     output += login_session['picture']
-#     output += ' " style = "width: 300px; height: 300px;border-radius: ' \
-#               '150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
-#     flash("you are now logged in as %s" % login_session['userid'])
-#     return output
 
 
 @app.route('/gconnect', methods=['POST'])
@@ -223,8 +187,8 @@ def gconnect():
     output += ' " style = "width: 300px; height: 300px;border-radius: 150px;' \
               '-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s" % login_session['username'])
-    print("************* done!")
-    return render_template('login_success.html', login_session=login_session)#redirect(url_for('login_success'))
+    print("google login successful!")
+    return render_template('login_success.html', login_session=login_session)  # redirect(url_for('login_success'))
 
 
 @app.route('/gdisconnect')
@@ -247,6 +211,7 @@ def gdisconnect():
     if result['status'] == '200':
         response = make_response(json.dumps('Successfully disconnected.'), 200)
         response.headers['Content-Type'] = 'application/json'
+        print('Google logout successful')
         return response
     else:
         response = make_response(json.dumps('Failed to revoke token for given user.', 400))
@@ -279,7 +244,7 @@ def fbconnect():
         and replace the remaining quotes with nothing so that it can be used directly in the graph
         api calls
     '''
-    token = result['access_token']  #'result.split(',')[0].split(':')[1].replace('"', '')
+    token = result['access_token']  # 'result.split(',')[0].split(':')[1].replace('"', '')
 
     url = 'https://graph.facebook.com/v4.0/me?access_token=%s&fields=name,id,email' % token
     result = requests.get(url)
@@ -324,13 +289,8 @@ def fbconnect():
     output += ' " style = "width: 300px; height: 300px;border-radius: 150px;' \
               '-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
 
-    flash("Now logged in as %s" % login_session['username'])
+    print("Facebook login successful!")
     return redirect(url_for('login_success'))
-
-
-@app.route('/login_success')
-def login_success():
-    return render_template('login_success.html', login_session=login_session)
 
 
 @app.route('/fbdisconnect')
@@ -341,29 +301,8 @@ def fbdisconnect():
     url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id, access_token)
     h = httplib2.Http()
     result = h.request(url, 'DELETE')[1]
+    print('Facebook logout successful')
     return "you have been logged out"
-
-
-def createUser(login_session):
-    newUser = User(name=login_session['username'], email=login_session[
-        'email'], picture=login_session['picture'])
-    session.add(newUser)
-    session.commit()
-    user = session.query(User).filter_by(email=login_session['email']).one()
-    return user.id
-
-
-def getUserInfo(user_id):
-    user = session.query(User).filter_by(id=user_id).one()
-    return user
-
-
-def getUserID(email):
-    try:
-        user = session.query(User).filter_by(email=email).one()
-        return user.id
-    except:
-        return None
 
 
 # Disconnect based on provider
@@ -383,10 +322,32 @@ def disconnect():
         del login_session['user_id']
         del login_session['provider']
         print("You have successfully been logged out.")
-        return render_template('index.html')
     else:
         print("You were not logged in")
-        return render_template('index.html')
+    return render_template('index.html', STATE=login_session['state'], LOGIN_SESSION=login_session)
+
+
+def createUser(login_session):
+    newUser = User(name=login_session['username'], email=login_session[
+        'email'], picture=login_session['picture'])
+    session.add(newUser)
+    session.commit()
+    user = session.query(User).filter_by(email=login_session['email']).one()
+    return user.id
+
+
+def getUserInfo(user_id):
+    user = session.query(User).filter_by(id=user_id).one()
+    return user
+
+
+def getUserID(email):
+    print("getting user with email:", email)
+    try:
+        user = session.query(User).filter_by(email=email).one()
+        return user.id
+    except:
+        return None
 
 
 if __name__ == '__main__':

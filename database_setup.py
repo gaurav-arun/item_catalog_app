@@ -24,8 +24,8 @@ class Item(Base):
     category = Column(String(250), nullable=False)
     description = Column(String(1024), nullable=False)
     image = Column(LargeBinary, nullable=False)
-    # user_id = Column(Integer, ForeignKey('user.id'))
-    # user = relationship(User)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship(User)
 
     @property
     def serialize(self):
@@ -41,5 +41,5 @@ class Item(Base):
         }
 
 
-engine = create_engine('sqlite:///db/itemcatalog.db')
+engine = create_engine('sqlite:///db/itemcatalog.db', connect_args={'check_same_thread': False})
 Base.metadata.create_all(engine)

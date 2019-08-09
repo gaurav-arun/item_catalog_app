@@ -123,6 +123,8 @@
                     class="fas fa-sign-in-alt p-1"></span>Login</button> -->
             <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
                 data-state="login"><span class="fas fa-sign-in-alt p-1"></span>Login</button>
+            <img src= "{{PROFILE_PIC_URL}}"
+                 class="rounded-circle float-right" width="40px" height="40px" style="margin-right: 10px; vertical-align: center">
             <script>
                 // This function handles login and logout logic for
                 // both Google and Facebook login.
@@ -133,7 +135,8 @@
                     }
                     else {
                         $.get("/disconnect", function (data, status) {
-                            console.log("Data: " + data + "\nStatus: " + status);
+                            // console.log("Data: " + data + "\nStatus: " + status);
+                            console.log('Successfully logged out')
                             $('#loginLogoutBtn').html("<span class=\"fas fa-sign-in-alt p-1\"></span>Login")
                             $('#loginLogoutBtn')[0].dataset.state = 'login'
                         });
@@ -241,11 +244,6 @@
                                     // // Hide the sign-in button now that the user is authorized, for example:
                                     // $('#signinButton').attr('style', 'display: none');
                                     console.log('Executing Sigincallback ...')
-                                    $('#loginModalForm').modal("hide")
-                                    $('#loginLogoutBtn').html("<span class=\"fas fa-sign-out-alt p-1\"></span>Logout")
-                                    // Set the button state to logout so that when user clicks on it
-                                    // next time logout is triggered.
-                                    $('#loginLogoutBtn')[0].dataset.state = 'logout'
 
                                     // Send the code to the server
                                     $.ajax({
@@ -257,9 +255,15 @@
                                             'X-Requested-With': 'XMLHttpRequest'
                                         },
                                         contentType: 'application/octet-stream; charset=utf-8',
-                                        // success: function (result) {
-                                        //     console.log('Successfully logged in')
-                                        // },
+                                        success: function (result) {
+                                            console.log('Successfully logged in')
+                                            $('#loginModalForm').modal("hide")
+                                            $('#loginLogoutBtn').html("<span class=\"fas fa-sign-out-alt p-1\"></span>Logout")
+                                            // Set the button state to logout so that when user clicks on it
+                                            // next time logout is triggered.
+                                            $('#loginLogoutBtn')[0].dataset.state = 'logout'
+                                            // window.location.href = "/login_success"
+                                        },
                                         processData: false,
                                         data: authResult['code']
                                     });
@@ -269,58 +273,153 @@
                             }
                         </script>
                         <!--Facebook-->
-                        <button type="button" class="btn btn-lg btn-white btn-rounded z-depth-1a fb-login-button"
-                            data-scope="public_profile,email"  onclick="sendTokenToServer(this)">
-                            <i class="fab fa-facebook-f text-center px-1"></i></button>
-                            <script>
-                                    window.fbAsyncInit = function () {
-                                        FB.init({
-                                            appId: '2394225350834497',
-                                            cookie: true,
-                                            xfbml: true,
-                                            version: 'v4.0'
-                                        });
-        
-                                        FB.AppEvents.logPageView();
-                                    };
-        
-                                    (function (d, s, id) {
-                                        var js, fjs = d.getElementsByTagName(s)[0];
-                                        if (d.getElementById(id)) { return; }
-                                        js = d.createElement(s); js.id = id;
-                                        js.src = "https://connect.facebook.net/en_US/sdk.js";
-                                        fjs.parentNode.insertBefore(js, fjs);
-                                    }(document, 'script', 'facebook-jssdk'));
-        
-                                    // Here we run a very simple test of the Graph API after login is
-                                    // successful.  See statusChangeCallback() for when this call is made.
-                                    function sendTokenToServer(button) {
-                                        var access_token = FB.getAuthResponse()['accessToken'];
-                                        console.log(access_token)
-                                        console.log('Welcome!  Fetching your information.... ');
-                                        FB.api('/me', function (response) {
-                                            console.log('Successful login for: ' + response.name);
-                                            $.ajax({
-                                                type: 'POST',
-                                                url: '/fbconnect?state={{STATE}}',
-                                                processData: false,
-                                                data: access_token,
-                                                contentType: 'application/octet-stream; charset=utf-8',
-                                                success: function (result) {
-                                                    // Handle or verify the server response if necessary.
-                                                    if (result) {
-                                                        $('#result').html('Login Successful!</br>' + result + '</br>Redirecting...')
-                                                        setTimeout(function () {
-                                                            window.location.href = "/restaurant";
-                                                        }, 4000);
-                                                    } else {
-                                                        $('#result').html('Failed to make a server-side call. Check your configuration and console.');
-                                                    }
-                                                }
-                                            });
-                                        });
-                                    }
-                                </script>
+                        <!-- <button type="button" class="btn btn-lg btn-white btn-rounded z-depth-1a fb-login-button"
+                            data-scope="public_profile,email" onclick="FB.login(checkLoginState)">
+                            <i class="fab fa-facebook-f text-center px-1"></i></button> -->
+                        <!-- <div
+                            class="fb-login-button btn"
+                            data-max-rows="1"
+                            data-size="medium"
+                            data-button-type="continue_with"
+                            data-width="40%"
+                            data-scope="public_profile, email"
+                            onclick="FB.login(checkLoginState)"
+                        ><i class="fab fa-facebook-f text-center px-1"></i></div> -->
+
+                        <!-- Code taken from  https://developers.facebook.com/docs/facebook-login/web/ -->
+                        <!-- Facebook button  https://developers.facebook.com/docs/facebook-login/web/login-button/ -->
+                        <fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
+                        <script>
+                            // This is called with the results from from FB.getLoginStatus().
+                            function statusChangeCallback(response) {
+                                console.log('statusChangeCallback');
+                                console.log(response);
+                                // The response object is returned with a status field that lets the
+                                // app know the current login status of the person.
+                                // Full docs on the response object can be found in the documentation
+                                // for FB.getLoginStatus().
+                                if (response.status === 'connected') {
+                                    // Logged into your app and Facebook.
+                                    console.log("access_token : " + response.authResponse.accessToken)
+                                    response_token = response.authResponse.accessToken
+                                    sendTokenToServer(response_token);
+                                } else {
+                                    // The person is not logged into your app or we are unable to tell.
+                                    console.log('The person is not logged into your app or we are unable to tell')
+                                }
+                            }
+
+                            // This function is called when someone finishes with the Login
+                            // Button.  See the onlogin handler attached to it in the sample
+                            // code below.
+                            function checkLoginState() {
+                                FB.getLoginStatus(function (response) {
+                                    statusChangeCallback(response);
+                                });
+                            }
+
+                            window.fbAsyncInit = function () {
+                                FB.init({
+                                    appId: '2394225350834497',
+                                    cookie: true,  // enable cookies to allow the server to access 
+                                    // the session
+                                    xfbml: true,  // parse social plugins on this page
+                                    version: 'v4.0' // The Graph API version to use for the call
+                                });
+
+                                // Now that we've initialized the JavaScript SDK, we call 
+                                // FB.getLoginStatus().  This function gets the state of the
+                                // person visiting this page and can return one of three states to
+                                // the callback you provide.  They can be:
+                                //
+                                // 1. Logged into your app ('connected')
+                                // 2. Logged into Facebook, but not your app ('not_authorized')
+                                // 3. Not logged into Facebook and can't tell if they are logged into
+                                //    your app or not.
+                                //
+                                // These three cases are handled in the callback function.
+
+                                FB.getLoginStatus(function (response) {
+                                    statusChangeCallback(response);
+                                });
+
+                            };
+
+                            // Load the SDK asynchronously
+                            (function (d, s, id) {
+                                var js, fjs = d.getElementsByTagName(s)[0];
+                                if (d.getElementById(id)) return;
+                                js = d.createElement(s); js.id = id;
+                                js.src = "https://connect.facebook.net/en_US/sdk.js";
+                                fjs.parentNode.insertBefore(js, fjs);
+                            }(document, 'script', 'facebook-jssdk'));
+
+                            // Here we run a very simple test of the Graph API after login is
+                            // successful.  See statusChangeCallback() for when this call is made.
+                            function sendTokenToServer(response_token) {
+                                var access_token = response_token//FB.getAuthResponse()['accessToken']
+                                console.log('Welcome!  Fetching your information.... ');
+                                FB.api('/me', function (response) {
+                                    console.log('Successful login for: ' + response.name);
+                                    $.ajax({
+                                        type: 'POST',
+                                        url: '/fbconnect?state={{STATE}}',
+                                        processData: false,
+                                        data: access_token,
+                                        contentType: 'application/octet-stream; charset=utf-8',
+                                        success: function (result) {
+                                            // Handle or verify the server response if necessary.
+                                            if (result) {
+                                                $('#loginModalForm').modal("hide")
+                                                $('#loginLogoutBtn').html("<span class=\"fas fa-sign-out-alt p-1\"></span>Logout")
+                                                // Set the button state to logout so that when user clicks on it
+                                                // next time logout is triggered.
+                                                $('#loginLogoutBtn')[0].dataset.state = 'logout'
+                                                
+                                                console.log('Login Successful!' + result + 'Redirecting...')
+                                                // setTimeout(function () {
+                                                //     window.location.href = "/login_success";
+                                                // }, 2000);
+                                            } else {
+                                                console.log('Failed to make a server-side call. Check your configuration and console.');
+                                            }
+                                        }
+                                    });
+                                });
+                            }
+
+                            function logMeOut() {
+                                console.log('Logout Successful')
+                                document.getElementById('status').innerHTML =
+                                    'You have been logged out!';
+                            };
+                                    // function sendTokenToServer(button) {
+                                    //     var access_token = FB.getAuthResponse()['accessToken'];
+                                    //     console.log(access_token)
+                                    //     console.log('Welcome!  Fetching your information.... ');
+                                    //     FB.api('/me', function (response) {
+                                    //         console.log('Successful login for: ' + response.name);
+                                    //         $.ajax({
+                                    //             type: 'POST',
+                                    //             url: '/fbconnect?state={{STATE}}',
+                                    //             processData: false,
+                                    //             data: access_token,
+                                    //             contentType: 'application/octet-stream; charset=utf-8',
+                                    //             success: function (result) {
+                                    //                 // Handle or verify the server response if necessary.
+                                    //                 if (result) {
+                                    //                     $('#result').html('Login Successful!</br>' + result + '</br>Redirecting...')
+                                    //                     setTimeout(function () {
+                                    //                         window.location.href = "/restaurant";
+                                    //                     }, 4000);
+                                    //                 } else {
+                                    //                     $('#result').html('Failed to make a server-side call. Check your configuration and console.');
+                                    //                 }
+                                    //             }
+                                    //         });
+                                    //     });
+                                    // }
+                        </script>
                     </div>
                 </div>
                 <!--Footer-->

@@ -124,8 +124,9 @@
             {% if not LOGIN_SESSION.get('username') %}
             <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
                 data-state="login"><span class="fas fa-sign-in-alt p-1"></span>Login</button>
-            <img src="{{ url_for('static', filename='images/default/no_user_image.png') }}" class="rounded-circle float-right"
-                width="40px" height="40px" style="margin-right: 10px; vertical-align: center">
+            <img src="{{ url_for('static', filename='images/default/no_user_image.png') }}"
+                class="rounded-circle float-right" width="40px" height="40px"
+                style="margin-right: 10px; vertical-align: center">
             {% else %}
             <button class="btn btn-light" data-toggle="modal" data-target="#addItemModal">
                 <span class="fas fa-plus p-1"></span>Add New Item
@@ -178,13 +179,20 @@
                                 <input style="display:none" id="input-image-hidden" name="item_img"
                                     onchange="document.getElementById('add-item-image-preview').src = window.URL.createObjectURL(this.files[0])"
                                     type="file" accept="image/jpeg, image/png">
+                                <div class="form-check">
+                                    <button class="btn btn-outline-dark btn-sm float-left ml-1" id="add-item-upload-btn"
+                                        onclick="HandleBrowseClick('input-image-hidden'); return false;">
+                                        Upload a new image</button>
 
-                                <button class="btn btn-outline-dark btn-sm" id="add-item-upload-btn"
-                                    onclick="HandleBrowseClick('input-image-hidden'); return false;">
-                                    Upload a new image</button>
+                                    <label class="form-check-label float-right mr-4">
+                                        <input name="feeling-lucky-check" type="checkbox" class="form-check-input " value="feeling-lucky">I'm
+                                        Feeling Lucky
+                                    </label>
+                                </div>
                             </div>
 
-                            <div class="form-group">
+
+                            <div class="form-group mt-5">
                                 <label for="add-item-tit">Name</label>
                                 <input type="text" class="form-control" id="add-item-tit" name="item_name">
                                 <small id="name-help" class="form-text text-muted">Item name should be unique within a
@@ -432,7 +440,8 @@
                 <ul class="nav nav-pills flex-column">
                     <li class="nav-item">
                         <a class="nav-link {% if ACTIVE_CATEGORY == 'latest' %} active{% endif %}"
-                            href="/category/latest">Latest<span class="fas fa-fire fa-lg pl-2 float-right" style="color:rgb(255, 60, 0)"></span></a>
+                            href="/category/latest">Latest<span class="fas fa-fire fa-lg pl-2 float-right"
+                                style="color:rgb(255, 60, 0)"></span></a>
                     </li>
 
                     {% for category in ALL_CATEGORIES %}
@@ -456,13 +465,15 @@
                         <div class="card-body px-2 pb-0">
                             <h3 class="card-title title mb-0" id="{{item.id}}_tit">{{ item.name }}</h3>
 
-                            <h5 class="card-title category small font-italic" id="{{item.id}}_cat">{{ item.category }}</h5>
+                            <h5 class="card-title category small font-italic" id="{{item.id}}_cat">{{ item.category }}
+                            </h5>
 
                             <p class="card-text text-justify" id="{{item.id}}_desc">
                                 {{ item.description }}
                             </p>
 
-                            <div style="display: {% if 'username' in LOGIN_SESSION  and item.user_id == LOGIN_SESSION['user_id'] %}block{% else %}none{% endif %}">
+                            <div
+                                style="display: {% if 'username' in LOGIN_SESSION  and item.user_id == LOGIN_SESSION['user_id'] %}block{% else %}none{% endif %}">
                                 <button class="pl-0 card-title btn btn-link btn-sm" data-editid="{{item.id}}"
                                     onclick="EditItemModalWindow(this)">Edit</button>
                                 <button class="pl-0 card-title btn btn-link btn-sm " data-deleteid="{{item.id}}"

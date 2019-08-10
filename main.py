@@ -93,6 +93,11 @@ def upload():
     item_cat = request.form['item_cat']
     item_desc = request.form['item_desc']
 
+    # Url is updated below as necessary
+    item_img_url = 'images/default/no-logo.gif'
+    feeling_lucky = request.form.getlist('feeling-lucky-check')
+    print("Is Feeling Lucky? ", feeling_lucky)
+
     if item_img:
         # Create new upload directory if necessary
         upload_dir = pathlib.Path('static/images/uploads')
@@ -113,16 +118,14 @@ def upload():
 
         # Create the url to be stored in DB
         item_img_url = str(item_image_file_path)[7:]
-    else:
-        # Find a random image from bing if not
-        # provided by the user.
+    elif feeling_lucky:
+        # Find a random image from bing if user is feeling lucky!
         print('Fetching a random image for "{}" from bing'.format(item_name))
         new_image_file_path = bbid.fetch_random_image_from_keyword(item_name, output_dir=RANDOM_IMAGE_DIR)
         if new_image_file_path:
             item_img_url = new_image_file_path[7:]
         else:
             print('Could not find bing image. Using default image.')
-            item_img_url = 'images/default/no-logo.gif'
 
     # Create a new Item and save it in the database.
     user_id = getUserID(login_session["email"])
@@ -216,6 +219,11 @@ def update_item(item_id):
     item_cat = request.form['item_cat']
     item_desc = request.form['item_desc']
 
+    # Url is updated below as necessary
+    item_img_url = item_to_update.image
+    feeling_lucky = request.form.getlist('feeling-lucky-check')
+    print("Is Feeling Lucky ? ", feeling_lucky)
+
     if item_img:
         # Create new upload directory if necessary
         upload_dir = pathlib.Path('static/images/uploads')
@@ -236,16 +244,14 @@ def update_item(item_id):
 
         # Create the url to be stored in DB
         item_img_url = str(item_image_file_path)[7:]
-    else:
-        # Find a random image from bing if not
-        # provided by the user.
+    elif feeling_lucky:
+        # Find a random image from bing if user is feeling lucky
         print('Fetching a random image for "{}" from bing'.format(item_name))
         new_image_file_path = bbid.fetch_random_image_from_keyword(item_name, output_dir=RANDOM_IMAGE_DIR)
         if new_image_file_path:
             item_img_url = new_image_file_path[7:]
         else:
-            print('Could not find bing image. Using default image.')
-            item_img_url = 'images/default/no-logo.gif'
+            print('Could not find bing image. Keeping original image.')
 
     # Delete old item image
     item_image_path = pathlib.Path('static/' + item_to_update.image)

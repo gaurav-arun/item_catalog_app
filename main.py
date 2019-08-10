@@ -259,7 +259,6 @@ def fbconnect():
     data = result.json()
     login_session['provider'] = 'facebook'
     login_session['username'] = data["name"]
-    # TODO: Fix the scope so that email is also fetched
     login_session['email'] = data["email"]
     login_session['facebook_id'] = data["id"]
 

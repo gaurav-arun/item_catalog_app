@@ -124,7 +124,7 @@
             {% if not LOGIN_SESSION.get('username') %}
             <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
                 data-state="login"><span class="fas fa-sign-in-alt p-1"></span>Login</button>
-            <img src="{{ url_for('static', filename='images/no_user_image.png') }}" class="rounded-circle float-right"
+            <img src="{{ url_for('static', filename='images/default/no_user_image.png') }}" class="rounded-circle float-right"
                 width="40px" height="40px" style="margin-right: 10px; vertical-align: center">
             {% else %}
             <button class="btn btn-light" data-toggle="modal" data-target="#addItemModal">
@@ -182,7 +182,7 @@
                             <div class="form-group text-center">
                                 <img class="img-thumbnail" id="add-item-image-preview"
                                     style="margin-top: 2px; width: 25rem; height: 25rem; border: none; border-radius: 0.5em"
-                                    src="{{ url_for('static', filename='images/no-logo.gif') }}" alt="No Image">
+                                    src="{{ url_for('static', filename='images/default/no-logo.gif') }}" alt="No Image">
 
                                 <input style="display:none" id="input-image-hidden" name="item_img"
                                     onchange="document.getElementById('add-item-image-preview').src = window.URL.createObjectURL(this.files[0])"
@@ -383,7 +383,7 @@
 
                                 // Close the login modal and wait for server redirect.
                                 $('#loginModalForm').modal("hide")
-                                
+
                                 FB.api('/me', function (response) {
                                     console.log('Successful login for: ' + response.name);
                                     $.ajax({
@@ -421,32 +421,6 @@
                                 document.getElementById('status').innerHTML =
                                     'You have been logged out!';
                             };
-                                    // function sendTokenToServer(button) {
-                                    //     var access_token = FB.getAuthResponse()['accessToken'];
-                                    //     console.log(access_token)
-                                    //     console.log('Welcome!  Fetching your information.... ');
-                                    //     FB.api('/me', function (response) {
-                                    //         console.log('Successful login for: ' + response.name);
-                                    //         $.ajax({
-                                    //             type: 'POST',
-                                    //             url: '/fbconnect?state={{STATE}}',
-                                    //             processData: false,
-                                    //             data: access_token,
-                                    //             contentType: 'application/octet-stream; charset=utf-8',
-                                    //             success: function (result) {
-                                    //                 // Handle or verify the server response if necessary.
-                                    //                 if (result) {
-                                    //                     $('#result').html('Login Successful!</br>' + result + '</br>Redirecting...')
-                                    //                     setTimeout(function () {
-                                    //                         window.location.href = "/restaurant";
-                                    //                     }, 4000);
-                                    //                 } else {
-                                    //                     $('#result').html('Failed to make a server-side call. Check your configuration and console.');
-                                    //                 }
-                                    //             }
-                                    //         });
-                                    //     });
-                                    // }
                         </script>
                     </div>
                 </div>
@@ -466,327 +440,46 @@
                 <h2>Categories</h2>
                 <ul class="nav nav-pills flex-column">
                     <li class="nav-item">
-                        <a class="nav-link" href="#section1">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#section2">Section 2 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section3">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section4">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link " href="#section1">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section2">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section3">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section4">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link " href="#section1">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section2">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section3">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section4">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link " href="#section1">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section2">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section3">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section4">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link " href="#section1">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section2">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section3">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#section4">Section 1 <span
-                                class="badge badge-secondary float-right">10</span></a>
+                        <a class="nav-link {% if ACTIVE_CATEGORY == 'latest' %} active{% endif %}"
+                            href="/category/latest">Latest<span class="fas fa-fire fa-lg pl-2 float-right" style="color:rgb(255, 60, 0)"></span></a>
                     </li>
 
+                    {% for category in ALL_CATEGORIES %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if category[0] == ACTIVE_CATEGORY %} active{% endif %}"
+                            href="/category/{{category[0]}}">{{ category[0]|title }}<span
+                                class="badge badge-secondary float-right">{{ category[1] }}</span></a>
+                    </li>
+                    {% endfor %}
                 </ul>
             </nav>
             <div class="col-sm-9 p-3">
-                <h2 class="font-weight-bol d-flex justify-content-center">Selected Category</h2>
+                <h2 class="font-weight-bol d-flex justify-content-center">{{ ACTIVE_CATEGORY|title }}</h2>
                 <div class="d-inline-flex flex-wrap justify-content-center">
-                    <div class="card p-3 m-3 shadow" id='unique_id_1' style="width: 25em">
-                        <img class="card-img-top img-thumbnail" id='unique_id_1_img'
-                            src="{{ url_for('static', filename='images/skateboard.jpeg') }}" alt=""
+                    {% for item in CATEGORY_ITEMS %}
+                    <div class="card p-3 m-3 shadow" id="{{ item.id }}" style="width: 25em">
+                        <img class="card-img-top img-thumbnail" id='{{item.id}}_img'
+                            src="{{  url_for('static', filename=item.image) }}"
+                            alt="{{ url_for('static', filename='images/default/no-logo.gif') }}"
                             style="margin-top: 2px; height: 25rem; border: none; border-radius: 0.5em">
                         <div class="card-body px-2 pb-0">
-                            <h3 class="card-title title mb-0" id='unique_id_1_tit'>Skatemaster MX99 Pro</h3>
+                            <h3 class="card-title title mb-0" id="{{item.id}}_tit">{{ item.name }}</h3>
 
-                            <h5 class="card-title category small font-italic" id='unique_id_1_cat'>Skateboard</h5>
+                            <h5 class="card-title category small font-italic" id="{{item.id}}_cat">{{ item.category }}</h5>
 
-                            <p class="card-text text-justify" id='unique_id_1_desc'>
-                                The extension operates in two modes -
-                                it can launch an instance of Chrome
-                                navigated to your app, or it can attach
-                                to a running instance of Chrome. Both
-                                modes requires you to be serving your
-                                web application from local web server,
-                                which is started from either a VS Code
-                                task or from your command-line. Using
-                                the url parameter you simply tell VS
-                                Code which URL to either open or launch
-                                in Chrome.
+                            <p class="card-text text-justify" id="{{item.id}}_desc">
+                                {{ item.description }}
                             </p>
 
-                            <div style="display:block">
-                                <button class="pl-0 card-title btn btn-link btn-sm" data-editid='unique_id_1'
+                            <div style="display: {% if 'username' in LOGIN_SESSION  and item.user_id == LOGIN_SESSION['user_id'] %}block{% else %}none{% endif %}">
+                                <button class="pl-0 card-title btn btn-link btn-sm" data-editid="{{item.id}}"
                                     onclick="EditItemModalWindow(this)">Edit</button>
-                                <button class="pl-0 card-title btn btn-link btn-sm " data-deleteid='unique_id_1'
+                                <button class="pl-0 card-title btn btn-link btn-sm " data-deleteid="{{item.id}}"
                                     onclick="DeleteItemModalWindow(this)">Delete</button>
                             </div>
                         </div>
                     </div>
-                    <div class="card p-3 m-3 shadow" id='unique_id_2' style="width: 25rem">
-                        <img class="card-img-top img-thumbnail" id='unique_id_2_img'
-                            src="{{ url_for('static', filename='images/skateboard_2.jpeg') }}" alt=""
-                            style="margin-top: 2px; height: 25rem; border: none; border-radius: 0.5em">
-                        <div class="card-body px-2 pb-0">
-                            <h3 class="card-title title mb-0" id='unique_id_2_tit'>Skatemaster Pro</h3>
-
-                            <h5 class="card-title category small font-italic" id='unique_id_2_cat'>Skateboard</h5>
-
-                            <p class="card-text text-justify" id='unique_id_2_desc'>
-                                The extension operates in two modes -
-                                it can launch an instance of Chrome
-                                navigated to your app, or it can attach
-                                Code which URL to either open or launch
-                                in Chrome.
-                            </p>
-
-                            <div style="display:block">
-                                <button class="pl-0 card-title btn btn-link btn-sm" data-editid="unique_id_2"
-                                    onclick="EditItemModalWindow(this)">Edit</button>
-                                <button class="pl-0 card-title btn btn-link btn-sm" data-deleteid="unique_id_2"
-                                    onclick="DeleteItemModalWindow(this)">Delete</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail"
-                            src="{{ url_for('static', filename='images/skateboard_3.jpg') }}" alt=""
-                            style="margin-top: 2px; height: 25rem">
-                        <div class="card-body">
-                            <h4 class="card-title">Title</h4>
-                            <span class="pl-0 card-title btn btn-link btn-sm">Edit</span>
-                            <span class="pl-0 card-title btn btn-link btn-sm">Delete</span>
-
-                            <p class="card-text">
-                                The extension operates in two modes -
-                                it can launch an instance of Chrome
-                                navigated to your app, or it can attach
-                                to a running instance of Chrome. Both
-
-                            </p>
-                            <div class="align-self-end" style="display:block">
-                                <button class="pl-0 card-title btn btn-link btn-sm">Edit</button>
-                                <button class="pl-0 card-title btn btn-link btn-sm ">Delete</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail"
-                            src="{{ url_for('static', filename='images/skateboard_4.jpg') }}" alt=""
-                            style="margin-top: 2px; height: 25rem">
-                        <div class="card-body">
-                            <h4 class="card-title">Title</h4><span
-                                class="pl-0 card-title btn btn-link btn-sm">Edit</span> <span
-                                class="pl-0 card-title btn btn-link btn-sm">Delete</span>
-                            <p class="card-text">
-                                The extension operates in two modes -
-                                it can launch an instance of Chrome
-                                navigated to your app, or it can attach
-                                to a running instance of Chrome. Both
-                                modes requires you to be serving your
-                                web application from local web server,
-                                which is started from either a VS Code
-
-                            </p>
-                        </div>
-                    </div>
-                    <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail"
-                            src="{{ url_for('static', filename='images/skateboard_5.jpg') }}" alt=""
-                            style="margin-top: 2px; height: 25rem">
-                        <div class="card-body">
-                            <h4 class="card-title">Title</h4><span
-                                class="pl-0 card-title btn btn-link btn-sm">Edit</span> <span
-                                class="pl-0 card-title btn btn-link btn-sm">Delete</span>
-                            <p class="card-text">
-                                The extension operates in two modes -
-                                it can launch an instance of Chrome
-                                navigated to your app, or it can attach
-                                to a running instance of Chrome. Both
-                                modes requires you to be serving your
-                                web application from local web server,
-                                which is started from either a VS Code
-                                task or from your command-line. Using
-                                the url parameter you simply tell VS
-                                Code which URL to either open or launch
-                                in Chrome.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail"
-                            src="{{ url_for('static', filename='images/skateboard_6.jpg') }}" alt=""
-                            style="margin-top: 2px; height: 25rem">
-                        <div class="card-body">
-                            <h4 class="card-title">Title</h4>
-                            <span class="pl-0 card-title btn btn-link btn-sm">Edit</span>
-                            <span class="pl-0 card-title btn btn-link btn-sm">Delete</span>
-                            <p class="card-text">
-                                The extension operates in two modes -
-                                it can launch an instance of Chrome
-                                navigated to your app, or it can attach
-                                to a running instance of Chrome. Both
-                                modes requires you to be serving your
-                                web application from local web server,
-                                which is started from either a VS Code
-                                task or from your command-line. Using
-                                the url parameter you simply tell VS
-                                Code which URL to either open or launch
-                                in Chrome.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail"
-                            src="{{ url_for('static', filename='images/skateboard_7.jpg') }}" alt=""
-                            style="margin-top: 2px; height: 25rem">
-                        <div class="card-body">
-                            <h4 class="card-title">Title</h4><span
-                                class="pl-0 card-title btn btn-link btn-sm">Edit</span> <span
-                                class="pl-0 card-title btn btn-link btn-sm">Delete</span>
-                            <p class="card-text">
-                                The extension operates in two modes -
-                                it can launch an instance of Chrome
-                                navigated to your app, or it can attach
-                                to a running instance of Chrome. Both
-                                modes requires you to be serving your
-                                web application from local web server,
-                                which is started from either a VS Code
-                                task or from your command-line. Using
-                                the url parameter you simply tell VS
-                                Code which URL to either open or launch
-                                in Chrome.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail"
-                            src="{{ url_for('static', filename='images/skateboard_8.jpg') }}" alt=""
-                            style="margin-top: 2px; height: 25rem">
-                        <div class="card-body">
-                            <h4 class="card-title">Title</h4><span
-                                class="pl-0 card-title btn btn-link btn-sm">Edit</span> <span
-                                class="pl-0 card-title btn btn-link btn-sm">Delete</span>
-                            <p class="card-text">
-                                The extension operates in two modes -
-                                it can launch an instance of Chrome
-                                navigated to your app, or it can attach
-                                to a running instance of Chrome. Both
-                                modes requires you to be serving your
-                                web application from local web server,
-                                which is started from either a VS Code
-                                task or from your command-line. Using
-                                the url parameter you simply tell VS
-                                Code which URL to either open or launch
-                                in Chrome.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail"
-                            src="{{ url_for('static', filename='images/skateboard_9.jpg') }}" alt=""
-                            style="margin-top: 2px; height: 25rem">
-                        <div class="card-body">
-                            <h4 class="card-title">Title</h4>
-                            <span class="pl-0 card-title btn btn-link btn-sm">Edit</span>
-                            <span class="pl-0 card-title btn btn-link btn-sm">Delete</span>
-                            <p class="card-text">
-                                The extension operates in two modes -
-                                it can launch an instance of Chrome
-                                navigated to your app, or it can attach
-                                to a running instance of Chrome. Both
-                                modes requires you to be serving your
-                                web application from local web server,
-                                which is started from either a VS Code
-                                task or from your command-line. Using
-                                the url parameter you simply tell VS
-                                Code which URL to either open or launch
-                                in Chrome.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="card p-3 m-3 shadow" style="width: 25rem">
-                        <img class="card-img-top img-thumbnail"
-                            src="{{ url_for('static', filename='images/skateboard.jpeg') }}" alt=""
-                            style="margin-top: 2px; height: 25rem">
-                        <div class="card-body">
-                            <h4 class="card-title">Title</h4>
-                            <span class="pl-0 card-title btn btn-link btn-sm">Edit</span>
-                            <span class="pl-0 card-title btn btn-link btn-sm">Delete</span>
-                            <p class="card-text">
-                                The extension operates in two modes -
-                                it can launch an instance of Chrome
-                                navigated to your app, or it can attach
-                                to a running instance of Chrome. Both
-                                modes requires you to be serving your
-                                web application from local web server,
-                                which is started from either a VS Code
-                                task or from your command-line. Using
-                                the url parameter you simply tell VS
-                                Code which URL to either open or launch
-                                in Chrome.
-                            </p>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

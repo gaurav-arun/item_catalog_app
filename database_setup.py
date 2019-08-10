@@ -23,7 +23,7 @@ class Item(Base):
     name = Column(String(250), nullable=False)
     category = Column(String(250), nullable=False)
     description = Column(String(1024), nullable=False)
-    image = Column(LargeBinary, nullable=False)
+    image = Column(String(1024), nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship(User)
 

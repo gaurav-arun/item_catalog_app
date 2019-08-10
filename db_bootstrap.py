@@ -49,10 +49,12 @@ items_list = {
         'Laptop',
         'Study Table',
         'Coffee Mug',
-        'Alexa'
+        'Amazon Alexa'
     ]
 }
 
+
+RANDOM_IMAGE_DIR = 'static/images/bing/'
 
 def bootstrap():
     user1 = User(name='Gaurav Rathore',
@@ -63,7 +65,7 @@ def bootstrap():
     session.commit()
 
     user2 = User(name='Gaurav Rathore',
-                 email='ga_rathore07@yahoo.in',
+                 email='ga_rathore007@yahoo.in',
                  picture='https://platform-lookaside.fbsbx.com/platform/profilepic/?'
                          'asid=10211941360887732&height=200&width=200&ext=1568031179&hash=AeSW6XmrvjqWW7-Q')
 
@@ -86,17 +88,17 @@ def bootstrap():
             # Find a random image from bing if not
             # provided by the user.
             print('Fetching a random image for "{}" from bing'.format(item))
-            new_image_file_path = bbid.fetch_random_image_from_keyword(item)
+            new_image_file_path = bbid.fetch_random_image_from_keyword(item, output_dir=RANDOM_IMAGE_DIR)
             if new_image_file_path:
-                item_img_content = open(new_image_file_path, 'rb')
+                item_img_url = new_image_file_path[7:]
             else:
                 print('Could not find bing image. Using default image.')
-                item_img_content = open('static/images/no-logo.gif', 'rb')
+                item_img_url = 'images/default/no-logo.gif'
 
             item_obj = Item(name=item,
                             category=category,
                             description=item + " belongs to " + category + " category.",
-                            image=item_img_content.read(),
+                            image=item_img_url,
                             user_id=user_id)
 
             session.add(item_obj)

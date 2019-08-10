@@ -2,13 +2,16 @@ from flask import Flask, render_template, request, redirect, jsonify, url_for, f
 from flask import session as login_session
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 
-from sqlalchemy import create_engine, asc
+from sqlalchemy import create_engine, desc, func
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, User, Item
 from bbid import bbid
 import os
+import pathlib
 import shutil
 import utils
+import urllib
+import time
 
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
@@ -35,18 +38,52 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+RANDOM_IMAGE_DIR = 'static/images/bing/'
+
 
 @app.route('/')
 @app.route('/login/')
 def login():
     state = utils.get_random_state()
     login_session['state'] = state
-    return render_template('index.html', STATE=state, LOGIN_SESSION=login_session)
+    # Get all categories and their item count
+    all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
+    # Get 10 most recently added items
+    default_category = 'latest'
+    latest_items = session.query(Item).order_by(desc(Item.id)).limit(10)
+
+    return render_template('index.html',
+                           STATE=login_session['state'],
+                           LOGIN_SESSION=login_session,
+                           ACTIVE_CATEGORY=default_category,
+                           ALL_CATEGORIES=all_categories,
+                           CATEGORY_ITEMS=latest_items)
 
 
 @app.route('/login_success')
 def login_success():
-    return render_template('index.html', STATE=login_session['state'], LOGIN_SESSION=login_session)
+    # Get all categories and their item count
+    all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
+    # Get 10 most recently added items
+    default_category = 'latest'
+    latest_items = session.query(Item).order_by(desc(Item.id)).limit(10)
+
+    return render_template('index.html',
+                           STATE=login_session['state'],
+                           LOGIN_SESSION=login_session,
+                           ACTIVE_CATEGORY=default_category,
+                           ALL_CATEGORIES=all_categories,
+                           CATEGORY_ITEMS=latest_items)
+
+
+def success_response(msg):
+    response = make_response(json.dumps('msg'), 200)
+    response.headers['Content-Type'] = 'application/json'
+    return response
+
+
+def sanitize_filename(file_name):
+    return file_name.strip().replace(' ', '_')
 
 
 @app.route('/add-new-item', methods=['POST'])
@@ -60,35 +97,67 @@ def upload():
     item_desc = request.form['item_desc']
 
     if item_img:
-        item_img_content = item_img.read()
+        # Create new upload directory if necessary
+        upload_dir = pathlib.Path('static/images/uploads')
+        print("upload dir:", upload_dir)
+        if not upload_dir.exists():
+            upload_dir.mkdir(parents=True)
+
+        # Save the image with timestamp(for unique filename) to images/uploads directory
+        item_image_file_name = urllib.parse.quote(item_img.filename) + '_' + str(int(time.time()))
+        item_image_file_path = upload_dir / item_image_file_name
+        print("image path :", item_image_file_path)
+
+        with open(str(item_image_file_path), 'wb') as f:
+            f.write(item_img.read())
+
+        # Create the url to be stored in DB
+        item_img_url = str(item_image_file_path)[7:]
     else:
         # Find a random image from bing if not
         # provided by the user.
         print('Fetching a random image for "{}" from bing'.format(item_name))
-        new_image_file_path = bbid.fetch_random_image_from_keyword(item_name)
+        new_image_file_path = bbid.fetch_random_image_from_keyword(item_name, output_dir=RANDOM_IMAGE_DIR)
         if new_image_file_path:
-            item_img_content = open(new_image_file_path, 'rb')
+            item_img_url = new_image_file_path[7:]
         else:
             print('Could not find bing image. Using default image.')
-            item_img_content = open('static/images/no-logo.gif', 'rb')
+            item_img_url = 'images/default/no-logo.gif'
 
     # Create a new Item and save it in the database.
     user_id = getUserID(login_session["email"])
     new_item = Item(name=item_name,
-                    category=item_cat,
+                    category=item_cat.lower(),
                     description=item_desc,
-                    image=item_img_content.read(),
+                    image=item_img_url,
                     user_id=user_id)
     session.add(new_item)
     session.commit()
 
-    # Remove temp directory created for bing image
-    if os.path.exists('bing'):
-        shutil.rmtree('bing')
-
     flash('New item "{}" added successfully'.format(item_name))
 
-    return redirect(url_for('login'))
+    return redirect(url_for('get_category', category=item_cat))
+
+
+@app.route('/category/<string:category>')
+def get_category(category):
+    # Get all categories and their item count
+    all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
+
+    default_category = 'latest'
+    if category == default_category:
+        # Get 10 most recently added items
+        items_in_category = session.query(Item).order_by(desc(Item.id)).limit(10)
+    else:
+        # Get all item rows in specified category
+        items_in_category = session.query(Item).filter_by(category=category).order_by(desc(Item.id)).all()
+
+    return render_template('index.html',
+                           STATE=login_session['state'],
+                           LOGIN_SESSION=login_session,
+                           ACTIVE_CATEGORY=category,
+                           ALL_CATEGORIES=all_categories,
+                           CATEGORY_ITEMS=items_in_category)
 
 
 @app.route('/gconnect', methods=['POST'])
@@ -181,17 +250,7 @@ def gconnect():
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
 
-    output = ''
-    output += '<h1>Welcome, '
-    output += login_session['username']
-    output += '!</h1>'
-    output += '<img src="'
-    output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;' \
-              '-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
-    flash("you are now logged in as %s" % login_session['username'])
-    print("google login successful!")
-    return render_template('login_success.html', login_session=login_session)  # redirect(url_for('login_success'))
+    return success_response('Google login successful')
 
 
 @app.route('/gdisconnect')
@@ -281,18 +340,7 @@ def fbconnect():
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
 
-    output = ''
-    output += '<h1>Welcome, '
-    output += login_session['username']
-
-    output += '!</h1>'
-    output += '<img src="'
-    output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;' \
-              '-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
-
-    print("Facebook login successful!")
-    return redirect(url_for('login_success'))
+    return success_response('Facebook login successful')
 
 
 @app.route('/fbdisconnect')
@@ -304,7 +352,7 @@ def fbdisconnect():
     h = httplib2.Http()
     result = h.request(url, 'DELETE')[1]
     print('Facebook logout successful')
-    return "you have been logged out"
+    return success_response('Facebook logout successful')
 
 
 # Disconnect based on provider
@@ -326,7 +374,8 @@ def disconnect():
         print("You have successfully been logged out.")
     else:
         print("You were not logged in")
-    return render_template('index.html', STATE=login_session['state'], LOGIN_SESSION=login_session)
+
+    return success_response('Logout successful')
 
 
 def createUser(login_session):

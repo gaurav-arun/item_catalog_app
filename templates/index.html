@@ -124,11 +124,11 @@
             {% if not LOGIN_SESSION.get('username') %}
             <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
                 data-state="login"><span class="fas fa-sign-in-alt p-1"></span>Login</button>
-            <img src="{{ url_for('static', filename='images/no_user_image.png') }}" class="rounded-circle float-right" width="40px" height="40px"
-                style="margin-right: 10px; vertical-align: center">
+            <img src="{{ url_for('static', filename='images/no_user_image.png') }}" class="rounded-circle float-right"
+                width="40px" height="40px" style="margin-right: 10px; vertical-align: center">
             {% else %}
             <button class="btn btn-light" data-toggle="modal" data-target="#addItemModal">
-                    <span class="fas fa-plus p-1"></span>Add New Item
+                <span class="fas fa-plus p-1"></span>Add New Item
             </button>
             <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
                 data-state="logout"><span class="fas fa-sign-out-alt p-1"></span>Logout</button>
@@ -262,6 +262,9 @@
                                     // $('#signinButton').attr('style', 'display: none');
                                     console.log('Executing Sigincallback ...')
 
+                                    // Close the login modal and wait for server redirect.
+                                    $('#loginModalForm').modal("hide")
+
                                     // Send the code to the server
                                     $.ajax({
                                         type: 'POST',
@@ -279,7 +282,7 @@
                                             // // Set the button state to logout so that when user clicks on it
                                             // // next time logout is triggered.
                                             // $('#loginLogoutBtn')[0].dataset.state = 'logout'
-                                            
+
                                             window.location.href = "/login_success"
                                         },
                                         processData: false,
@@ -377,6 +380,10 @@
                             function sendTokenToServer(response_token) {
                                 var access_token = response_token//FB.getAuthResponse()['accessToken']
                                 console.log('Welcome!  Fetching your information.... ');
+
+                                // Close the login modal and wait for server redirect.
+                                $('#loginModalForm').modal("hide")
+                                
                                 FB.api('/me', function (response) {
                                     console.log('Successful login for: ' + response.name);
                                     $.ajax({

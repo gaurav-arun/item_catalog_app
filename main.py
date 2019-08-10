@@ -51,6 +51,9 @@ def login_success():
 
 @app.route('/add-new-item', methods=['POST'])
 def upload():
+    if 'username' not in login_session:
+        return redirect('/login')
+
     item_img = request.files['item_img']
     item_name = request.form['item_name']
     item_cat = request.form['item_cat']

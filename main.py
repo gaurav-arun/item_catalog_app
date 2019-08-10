@@ -78,13 +78,13 @@ def login_success():
 
 
 def success_response(msg):
-    response = make_response(json.dumps('msg'), 200)
+    response = make_response(json.dumps(msg), 200)
     response.headers['Content-Type'] = 'application/json'
     return response
 
 
-@app.route('/add-new-item', methods=['POST'])
-def upload():
+@app.route('/add-item', methods=['POST'])
+def add_item():
     if 'username' not in login_session:
         return redirect('/login')
 
@@ -140,27 +140,6 @@ def upload():
     flash('New item "{}" added successfully'.format(item_name))
 
     return redirect(url_for('get_category', category=item_cat))
-
-
-@app.route('/category/<string:category>')
-def get_category(category):
-    # Get all categories and their item count
-    all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
-
-    default_category = 'latest'
-    if category == default_category:
-        # Get 10 most recently added items
-        items_in_category = session.query(Item).order_by(desc(Item.id)).limit(10)
-    else:
-        # Get all item rows in specified category
-        items_in_category = session.query(Item).filter_by(category=category).order_by(desc(Item.id)).all()
-
-    return render_template('index.html',
-                           STATE=login_session['state'],
-                           LOGIN_SESSION=login_session,
-                           ACTIVE_CATEGORY=category,
-                           ALL_CATEGORIES=all_categories,
-                           CATEGORY_ITEMS=items_in_category)
 
 
 @app.route('/delete-item/<string:item_id>')
@@ -271,6 +250,27 @@ def update_item(item_id):
     print('Updated item : {} with id {}'.format(item_to_update.name, item_to_update.id))
 
     return redirect(url_for('get_category', category=item_to_update.category))
+
+
+@app.route('/category/<string:category>')
+def get_category(category):
+    # Get all categories and their item count
+    all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
+
+    default_category = 'latest'
+    if category == default_category:
+        # Get 10 most recently added items
+        items_in_category = session.query(Item).order_by(desc(Item.id)).limit(10)
+    else:
+        # Get all item rows in specified category
+        items_in_category = session.query(Item).filter_by(category=category).order_by(desc(Item.id)).all()
+
+    return render_template('index.html',
+                           STATE=login_session['state'],
+                           LOGIN_SESSION=login_session,
+                           ACTIVE_CATEGORY=category,
+                           ALL_CATEGORIES=all_categories,
+                           CATEGORY_ITEMS=items_in_category)
 
 
 @app.route('/gconnect', methods=['POST'])

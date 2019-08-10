@@ -142,20 +142,11 @@
                     console.log("state:" + button.dataset.state)
                     if (button.dataset.state === "login") {
                         $('#loginModalForm').modal("toggle")
-
-                        // $('#loginModalForm').modal("hide")
-                        // $('#loginLogoutBtn').html("<span class=\"fas fa-sign-out-alt p-1\"></span>Logout")
-                        // // Set the button state to logout so that when user clicks on it
-                        // // next time logout is triggered.
-                        // $('#loginLogoutBtn')[0].dataset.state = 'logout'
                     }
                     else {
                         $.get("/disconnect", function (data, status) {
-                            // console.log("Data: " + data + "\nStatus: " + status);
                             console.log('Successfully logged out')
                             window.location.href = "/login"
-                            // $('#loginLogoutBtn').html("<span class=\"fas fa-sign-in-alt p-1\"></span>Login")
-                            // $('#loginLogoutBtn')[0].dataset.state = 'login'
                         });
                     }
 

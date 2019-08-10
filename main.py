@@ -3,6 +3,7 @@ from flask import session as login_session
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 
 from sqlalchemy import create_engine, desc, func
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, User, Item
 from bbid import bbid
@@ -82,10 +83,6 @@ def success_response(msg):
     return response
 
 
-def sanitize_filename(file_name):
-    return file_name.strip().replace(' ', '_')
-
-
 @app.route('/add-new-item', methods=['POST'])
 def upload():
     if 'username' not in login_session:
@@ -158,6 +155,70 @@ def get_category(category):
                            ACTIVE_CATEGORY=category,
                            ALL_CATEGORIES=all_categories,
                            CATEGORY_ITEMS=items_in_category)
+
+
+@app.route('/delete-item/<string:item_id>')
+def delete_item(item_id):
+    # Check if user is logged in
+    if 'username' not in login_session:
+        print('User not logged in')
+        return redirect(url_for('login'))
+
+    # Check if item belongs to the user
+    try:
+        item_to_delete = session.query(Item).filter_by(id=item_id).one()
+    except NoResultFound:
+        print('No matching item found in the DB.')
+        return redirect(url_for('login'))
+
+    if item_to_delete.user_id != login_session['user_id']:
+        print('Item cannot be deleted by this user')
+        return redirect(url_for('login'))
+
+    # Delete item image if it not the default image
+    item_image_path = pathlib.Path('static/' + item_to_delete.image)
+    if item_image_path.exists() and item_image_path.parts[-2] != 'default':
+        print('Deleting item image at :', item_image_path)
+        os.remove(str(item_image_path))
+
+    # Delete item from database
+    session.delete(item_to_delete)
+    session.commit()
+    print('Deleted item : {} with id {}'.format(item_to_delete.name, item_to_delete.id))
+
+    return redirect(url_for('login'))
+
+
+@app.route('/update-item/<string:item_id>')
+def update_item(item_id):
+    # Check if user is logged in
+    if 'username' not in login_session:
+        print('User not logged in')
+        return redirect(url_for('login'))
+
+    # Check if item belongs to the user
+    try:
+        item_to_update = session.query(Item).filter_by(id=item_id).one()
+    except NoResultFound:
+        print('No matching item found in the DB.')
+        return redirect(url_for('login'))
+
+    if item_to_update.user_id != login_session['user_id']:
+        print('Item cannot be deleted by this user')
+        return redirect(url_for('login'))
+
+    # Delete item image if it not the default image
+    item_image_path = pathlib.Path('static/' + item_to_update.image)
+    if item_image_path.exists() and item_image_path.parts[-2] != 'default':
+        print('Deleting item image at :', item_image_path)
+        os.remove(str(item_image_path))
+
+    # Delete item from database
+    session.delete(item_to_update)
+    session.commit()
+    print('Deleted item : {} with id {}'.format(item_to_update.name, item_to_update.id))
+
+    return redirect(url_for('login'))
 
 
 @app.route('/gconnect', methods=['POST'])

@@ -101,7 +101,10 @@ def upload():
             upload_dir.mkdir(parents=True)
 
         # Save the image with timestamp(for unique filename) to images/uploads directory
-        item_image_file_name = urllib.parse.quote(item_img.filename) + '_' + str(int(time.time()))
+        encoded_file_name = urllib.parse.quote(item_img.filename)
+        last_dot_index = encoded_file_name.rfind('.')
+        item_image_file_name = encoded_file_name[:last_dot_index] + '_' + \
+                               str(int(time.time())) + encoded_file_name[last_dot_index:]
         item_image_file_path = upload_dir / item_image_file_name
         print("image path :", item_image_file_path)
 
@@ -189,36 +192,79 @@ def delete_item(item_id):
     return redirect(url_for('login'))
 
 
-@app.route('/update-item/<string:item_id>')
+@app.route('/update-item/<string:item_id>', methods=['POST'])
 def update_item(item_id):
     # Check if user is logged in
     if 'username' not in login_session:
         print('User not logged in')
         return redirect(url_for('login'))
 
-    # Check if item belongs to the user
+    # Check if item exists in the database.
     try:
         item_to_update = session.query(Item).filter_by(id=item_id).one()
     except NoResultFound:
         print('No matching item found in the DB.')
         return redirect(url_for('login'))
 
+    # Check if item belongs to the user
     if item_to_update.user_id != login_session['user_id']:
-        print('Item cannot be deleted by this user')
+        print('Item cannot be updated by this user')
         return redirect(url_for('login'))
 
-    # Delete item image if it not the default image
+    item_img = request.files['item_img']
+    item_name = request.form['item_name']
+    item_cat = request.form['item_cat']
+    item_desc = request.form['item_desc']
+
+    if item_img:
+        # Create new upload directory if necessary
+        upload_dir = pathlib.Path('static/images/uploads')
+        print("upload dir:", upload_dir)
+        if not upload_dir.exists():
+            upload_dir.mkdir(parents=True)
+
+        # Save the image with timestamp(for unique filename) to 'images/uploads/' directory
+        encoded_file_name = urllib.parse.quote(item_img.filename)
+        last_dot_index = encoded_file_name.rfind('.')
+        item_image_file_name = encoded_file_name[:last_dot_index] + '_' + \
+                               str(int(time.time())) + encoded_file_name[last_dot_index:]
+        item_image_file_path = upload_dir / item_image_file_name
+        print("image path :", item_image_file_path)
+
+        with open(str(item_image_file_path), 'wb') as f:
+            f.write(item_img.read())
+
+        # Create the url to be stored in DB
+        item_img_url = str(item_image_file_path)[7:]
+    else:
+        # Find a random image from bing if not
+        # provided by the user.
+        print('Fetching a random image for "{}" from bing'.format(item_name))
+        new_image_file_path = bbid.fetch_random_image_from_keyword(item_name, output_dir=RANDOM_IMAGE_DIR)
+        if new_image_file_path:
+            item_img_url = new_image_file_path[7:]
+        else:
+            print('Could not find bing image. Using default image.')
+            item_img_url = 'images/default/no-logo.gif'
+
+    # Delete old item image
     item_image_path = pathlib.Path('static/' + item_to_update.image)
     if item_image_path.exists() and item_image_path.parts[-2] != 'default':
-        print('Deleting item image at :', item_image_path)
+        print('Deleting old item image at :', item_image_path)
         os.remove(str(item_image_path))
 
-    # Delete item from database
-    session.delete(item_to_update)
-    session.commit()
-    print('Deleted item : {} with id {}'.format(item_to_update.name, item_to_update.id))
+    # Update item attributes
+    item_to_update.image = item_img_url
+    item_to_update.name = item_name
+    item_to_update.category = item_cat
+    item_to_update.description = item_desc
 
-    return redirect(url_for('login'))
+    # Update the database
+    session.add(item_to_update)
+    session.commit()
+    print('Updated item : {} with id {}'.format(item_to_update.name, item_to_update.id))
+
+    return redirect(url_for('get_category', category=item_to_update.category))
 
 
 @app.route('/gconnect', methods=['POST'])

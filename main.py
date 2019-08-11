@@ -88,10 +88,15 @@ def add_item():
     if 'username' not in login_session:
         return redirect('/login')
 
+    # TODO: Validate user input
     item_img = request.files['item_img']
     item_name = request.form['item_name']
     item_cat = request.form['item_cat']
     item_desc = request.form['item_desc']
+
+    if not item_name or not item_cat or not item_desc:
+        print('One or more field(s) are empty!')
+        return redirect(url_for('login'))
 
     # Url is updated below as necessary
     item_img_url = 'images/default/no-logo.gif'
@@ -264,6 +269,12 @@ def get_category(category):
     else:
         # Get all item rows in specified category
         items_in_category = session.query(Item).filter_by(category=category).order_by(desc(Item.id)).all()
+
+    # If the category does not exist
+    # redirect the user to login page.
+    if not items_in_category:
+        print('No items found in "{}" category!'.format(category))
+        return redirect(url_for('login'))
 
     return render_template('index.html',
                            STATE=login_session['state'],

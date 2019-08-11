@@ -89,7 +89,7 @@
 
     function resetAddItemModal() {
         $('#add-item-title')[0].innerText = "Add New Item"
-        $('#add-item-form')[0].action = "{{ url_for('upload') }}";
+        $('#add-item-form')[0].action = "{{ url_for('add_item') }}";
         $('#add-item-image-preview')[0].src = "{{ url_for('static', filename='images/default/no-logo.gif') }}";
         $('#add-item-tit').val('');
         $('#add-item-cat').val('');
@@ -169,7 +169,7 @@
                 <!-- Modal body -->
                 <div class="modal-body">
                     <div class="container">
-                        <form method="POST" id="add-item-form" action="{{ url_for('upload') }}"
+                        <form method="POST" id="add-item-form" action="{{ url_for('add_item') }}"
                             enctype="multipart/form-data">
                             <div class="form-group text-center">
                                 <img class="img-thumbnail" id="add-item-image-preview"
@@ -185,7 +185,8 @@
                                         Upload a new image</button>
 
                                     <label class="form-check-label float-right mr-4">
-                                        <input name="feeling-lucky-check" type="checkbox" class="form-check-input " value="feeling-lucky">I'm
+                                        <input name="feeling-lucky-check" type="checkbox" class="form-check-input "
+                                            value="feeling-lucky">I'm
                                         Feeling Lucky
                                     </label>
                                 </div>
@@ -195,19 +196,18 @@
                             <div class="form-group mt-5">
                                 <label for="add-item-tit">Name</label>
                                 <input type="text" class="form-control" id="add-item-tit" name="item_name">
-                                <small id="name-help" class="form-text text-muted">Item name should be unique within a
-                                    category.</small>
+                                <small id="name-help" class="form-text text-muted">Best item names are concise and a noun.</small>
                             </div>
                             <div class="form-group">
                                 <label for="add-item-cat">Category</label>
                                 <input type="text" class="form-control" id="add-item-cat" name="item_cat">
-                                <small id="cat-help" class="form-text text-muted">A new category will be created if it
+                                <small id="cat-help" class="form-text text-muted">Category names are case-insensitive. A new category will be created if it
                                     does not exist.</small>
                             </div>
                             <div class="form-group">
                                 <label for="add-item-desc">Description</label>
                                 <textarea class="form-control" id="add-item-desc" rows="3" name="item_desc"></textarea>
-                                <small id="name-help" class="form-text text-muted">Provide a description of this
+                                <small id="name-help" class="form-text text-muted">Provide a brief description of this
                                     item.</small>
                             </div>
                         </form>
@@ -465,7 +465,7 @@
                         <div class="card-body px-2 pb-0">
                             <h3 class="card-title title mb-0" id="{{item.id}}_tit">{{ item.name }}</h3>
 
-                            <h5 class="card-title category small font-italic" id="{{item.id}}_cat">{{ item.category }}
+                            <h5 class="card-title category small font-italic" id="{{item.id}}_cat">{{ item.category }} : {{ item.id }} 
                             </h5>
 
                             <p class="card-text text-justify" id="{{item.id}}_desc">

@@ -1,8 +1,8 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, LargeBinary
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
-import base64
+import datetime
 
 Base = declarative_base()
 
@@ -25,6 +25,7 @@ class Item(Base):
     description = Column(String(1024), nullable=False)
     image = Column(String(1024), nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'))
+    last_updated_on = Column(DateTime, default=datetime.datetime.utcnow)
     user = relationship(User)
 
     @property

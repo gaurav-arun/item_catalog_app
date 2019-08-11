@@ -13,6 +13,7 @@ import shutil
 import utils
 import urllib
 import time
+import datetime
 
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
@@ -51,7 +52,7 @@ def login():
     all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
     # Get 10 most recently added items
     default_category = 'latest'
-    latest_items = session.query(Item).order_by(desc(Item.id)).limit(10)
+    latest_items = session.query(Item).order_by(desc(Item.last_updated_on)).limit(10)
 
     return render_template('index.html',
                            STATE=login_session['state'],
@@ -67,7 +68,7 @@ def login_success():
     all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
     # Get 10 most recently added items
     default_category = 'latest'
-    latest_items = session.query(Item).order_by(desc(Item.id)).limit(10)
+    latest_items = session.query(Item).order_by(desc(Item.last_updated_on)).limit(10)
 
     return render_template('index.html',
                            STATE=login_session['state'],
@@ -249,6 +250,7 @@ def update_item(item_id):
     item_to_update.name = item_name
     item_to_update.category = item_cat
     item_to_update.description = item_desc
+    item_to_update.last_updated_on = datetime.datetime.utcnow()
 
     # Update the database
     session.add(item_to_update)
@@ -266,10 +268,10 @@ def get_category(category):
     default_category = 'latest'
     if category == default_category:
         # Get 10 most recently added items
-        items_in_category = session.query(Item).order_by(desc(Item.id)).limit(10)
+        items_in_category = session.query(Item).order_by(desc(Item.last_updated_on)).limit(10)
     else:
         # Get all item rows in specified category
-        items_in_category = session.query(Item).filter_by(category=category).order_by(desc(Item.id)).all()
+        items_in_category = session.query(Item).filter_by(category=category).order_by(desc(Item.last_updated_on)).all()
 
     # If the category does not exist
     # redirect the user to login page.

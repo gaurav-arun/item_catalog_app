@@ -147,7 +147,7 @@ def add_item():
     return redirect(url_for('get_category', category=item_cat))
 
 
-@app.route('/delete-item/<string:item_id>')
+@app.route('/delete-item/<string:item_id>', methods=['DELETE'])
 def delete_item(item_id):
     # Check if user is logged in
     if 'username' not in login_session:
@@ -165,7 +165,7 @@ def delete_item(item_id):
         print('Item cannot be deleted by this user')
         return redirect(url_for('login'))
 
-    # Delete item image if it not the default image
+    # Delete item image if it is not the default image
     item_image_path = pathlib.Path('static/' + item_to_delete.image)
     if item_image_path.exists() and item_image_path.parts[-2] != 'default':
         print('Deleting item image at :', item_image_path)
@@ -176,7 +176,7 @@ def delete_item(item_id):
     session.commit()
     print('Deleted item : {} with id {}'.format(item_to_delete.name, item_to_delete.id))
 
-    return redirect(url_for('login'))
+    return success_response('Item deleted successfully')
 
 
 @app.route('/update-item/<string:item_id>', methods=['POST'])
@@ -237,11 +237,12 @@ def update_item(item_id):
         else:
             print('Could not find bing image. Keeping original image.')
 
-    # Delete old item image
-    item_image_path = pathlib.Path('static/' + item_to_update.image)
-    if item_image_path.exists() and item_image_path.parts[-2] != 'default':
-        print('Deleting old item image at :', item_image_path)
-        os.remove(str(item_image_path))
+    # Delete old item image if a new image is available
+    if item_img_url != item_to_update.image:
+        item_image_path = pathlib.Path('static/' + item_to_update.image)
+        if item_image_path.exists() and item_image_path.parts[-2] != 'default':
+            print('Deleting old item image at :', item_image_path)
+            os.remove(str(item_image_path))
 
     # Update item attributes
     item_to_update.image = item_img_url

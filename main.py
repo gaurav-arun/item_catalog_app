@@ -38,6 +38,8 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 RANDOM_IMAGE_DIR = 'static/images/bing/'
+LATEST_CATEGORY = 'latest'
+MAX_ITEMS_IN_LATEST_CATEGORY = 10
 
 
 @app.route('/')
@@ -45,24 +47,18 @@ RANDOM_IMAGE_DIR = 'static/images/bing/'
 def login():
     state = utils.get_random_state()
     login_session['state'] = state
+
     # Get all categories and their item count
-    all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
-    # Get 10 most recently added items
-    default_category = 'latest'
-    latest_items = session.query(Item).order_by(desc(Item.last_updated_on)).limit(10)
+    all_categories = _get_categories()
+    # Get most recently added items
+    latest_items = _get_latest_category_items()
 
     return render_template('index.html',
                            STATE=login_session['state'],
                            LOGIN_SESSION=login_session,
-                           ACTIVE_CATEGORY=default_category,
+                           ACTIVE_CATEGORY=LATEST_CATEGORY,
                            ALL_CATEGORIES=all_categories,
                            CATEGORY_ITEMS=latest_items)
-
-
-def _make_response(msg, error_code):
-    res = make_response(json.dumps(msg), error_code)
-    res.headers['Content-Type'] = 'application/json'
-    return res
 
 
 @app.route('/add-item', methods=['POST'])
@@ -70,7 +66,6 @@ def add_item():
     if 'username' not in login_session:
         return redirect('/login')
 
-    # TODO: Validate user input
     item_img = request.files['item_img']
     item_name = request.form['item_name']
     item_cat = request.form['item_cat']
@@ -80,42 +75,12 @@ def add_item():
         print('One or more field(s) are empty!')
         return redirect(url_for('login'))
 
-    # Url is updated below as necessary
-    item_img_url = 'images/default/no-logo.gif'
-    feeling_lucky = request.form.getlist('feeling-lucky-check')
-    print("Is Feeling Lucky? ", feeling_lucky)
-
-    if item_img:
-        # Create new upload directory if necessary
-        upload_dir = pathlib.Path('static/images/uploads')
-        print("upload dir:", upload_dir)
-        if not upload_dir.exists():
-            upload_dir.mkdir(parents=True)
-
-        # Save the image with timestamp(for unique filename) to images/uploads directory
-        encoded_file_name = urllib.parse.quote(item_img.filename)
-        last_dot_index = encoded_file_name.rfind('.')
-        item_image_file_name = encoded_file_name[:last_dot_index] + '_' + \
-                               str(int(time.time())) + encoded_file_name[last_dot_index:]
-        item_image_file_path = upload_dir / item_image_file_name
-        print("image path :", item_image_file_path)
-
-        with open(str(item_image_file_path), 'wb') as f:
-            f.write(item_img.read())
-
-        # Create the url to be stored in DB
-        item_img_url = str(item_image_file_path)[7:]
-    elif feeling_lucky:
-        # Find a random image from bing if user is feeling lucky!
-        print('Fetching a random image for "{}" from bing'.format(item_name))
-        new_image_file_path = bbid.fetch_random_image_from_keyword(item_name, output_dir=RANDOM_IMAGE_DIR)
-        if new_image_file_path:
-            item_img_url = new_image_file_path[7:]
-        else:
-            print('Could not find bing image. Using default image.')
+    item_img_url = _process_item_image(item_image=item_img,
+                                       keyword=item_name,
+                                       feeling_lucky=request.form.getlist('feeling-lucky-check'))
 
     # Create a new Item and save it in the database.
-    user_id = get_userid(login_session["email"])
+    user_id = _get_userid(login_session["email"])
     new_item = Item(name=item_name,
                     category=item_cat.lower(),
                     description=item_desc,
@@ -127,6 +92,63 @@ def add_item():
     flash('New item "{}" added successfully'.format(item_name))
 
     return redirect(url_for('get_category', category=item_cat))
+
+
+@app.route('/update-item/<string:item_id>', methods=['POST'])
+def update_item(item_id):
+    # Check if user is logged in
+    if 'username' not in login_session:
+        print('User not logged in')
+        return redirect(url_for('login'))
+
+    # Check if item exists in the database.
+    try:
+        item_to_update = session.query(Item).filter_by(id=item_id).one()
+    except NoResultFound:
+        print('No matching item found in the DB.')
+        return redirect(url_for('login'))
+
+    # Check if item belongs to the user
+    if item_to_update.user_id != login_session['user_id']:
+        print('Item cannot be updated by this user')
+        return redirect(url_for('login'))
+
+    item_img = request.files['item_img']
+    item_name = request.form['item_name']
+    item_cat = request.form['item_cat']
+    item_desc = request.form['item_desc']
+
+    if not item_name or not item_cat or not item_desc:
+        print('One or more field(s) are empty!')
+        return redirect(url_for('login'))
+
+    item_img_url = _process_item_image(item_image=item_img,
+                                       keyword=item_name,
+                                       feeling_lucky=request.form.getlist('feeling-lucky-check'))
+
+    # Delete old item image if a new image is available
+    if item_img_url != item_to_update.image:
+        item_image_path = pathlib.Path('static/' + item_to_update.image)
+        if item_image_path.exists() and item_image_path.parts[-2] != 'default':
+            print('Deleting old item image at :', item_image_path)
+            os.remove(str(item_image_path))
+
+    # Update item attributes
+    item_to_update.image = item_img_url
+    item_to_update.name = item_name
+    item_to_update.category = item_cat
+    item_to_update.description = item_desc
+
+    # Update the timestamp too.
+    item_to_update.last_updated_on = datetime.datetime.utcnow()
+
+    # Save updated item in the database.
+    session.add(item_to_update)
+    session.commit()
+
+    print('Updated item : {} with id {}'.format(item_to_update.name, item_to_update.id))
+
+    return redirect(url_for('get_category', category=item_to_update.category))
 
 
 @app.route('/delete-item/<string:item_id>', methods=['DELETE'])
@@ -161,100 +183,19 @@ def delete_item(item_id):
     return _make_response('Item deleted successfully', 200)
 
 
-@app.route('/update-item/<string:item_id>', methods=['POST'])
-def update_item(item_id):
-    # Check if user is logged in
-    if 'username' not in login_session:
-        print('User not logged in')
-        return redirect(url_for('login'))
-
-    # Check if item exists in the database.
-    try:
-        item_to_update = session.query(Item).filter_by(id=item_id).one()
-    except NoResultFound:
-        print('No matching item found in the DB.')
-        return redirect(url_for('login'))
-
-    # Check if item belongs to the user
-    if item_to_update.user_id != login_session['user_id']:
-        print('Item cannot be updated by this user')
-        return redirect(url_for('login'))
-
-    item_img = request.files['item_img']
-    item_name = request.form['item_name']
-    item_cat = request.form['item_cat']
-    item_desc = request.form['item_desc']
-
-    # Url is updated below as necessary
-    item_img_url = item_to_update.image
-    feeling_lucky = request.form.getlist('feeling-lucky-check')
-    print("Is Feeling Lucky ? ", feeling_lucky)
-
-    if item_img:
-        # Create new upload directory if necessary
-        upload_dir = pathlib.Path('static/images/uploads')
-        print("upload dir:", upload_dir)
-        if not upload_dir.exists():
-            upload_dir.mkdir(parents=True)
-
-        # Save the image with timestamp(for unique filename) to 'images/uploads/' directory
-        encoded_file_name = urllib.parse.quote(item_img.filename)
-        last_dot_index = encoded_file_name.rfind('.')
-        item_image_file_name = encoded_file_name[:last_dot_index] + '_' + \
-                               str(int(time.time())) + encoded_file_name[last_dot_index:]
-        item_image_file_path = upload_dir / item_image_file_name
-        print("image path :", item_image_file_path)
-
-        with open(str(item_image_file_path), 'wb') as f:
-            f.write(item_img.read())
-
-        # Create the url to be stored in DB
-        item_img_url = str(item_image_file_path)[7:]
-    elif feeling_lucky:
-        # Find a random image from bing if user is feeling lucky
-        print('Fetching a random image for "{}" from bing'.format(item_name))
-        new_image_file_path = bbid.fetch_random_image_from_keyword(item_name, output_dir=RANDOM_IMAGE_DIR)
-        if new_image_file_path:
-            item_img_url = new_image_file_path[7:]
-        else:
-            print('Could not find bing image. Keeping original image.')
-
-    # Delete old item image if a new image is available
-    if item_img_url != item_to_update.image:
-        item_image_path = pathlib.Path('static/' + item_to_update.image)
-        if item_image_path.exists() and item_image_path.parts[-2] != 'default':
-            print('Deleting old item image at :', item_image_path)
-            os.remove(str(item_image_path))
-
-    # Update item attributes
-    item_to_update.image = item_img_url
-    item_to_update.name = item_name
-    item_to_update.category = item_cat
-    item_to_update.description = item_desc
-    item_to_update.last_updated_on = datetime.datetime.utcnow()
-
-    # Update the database
-    session.add(item_to_update)
-    session.commit()
-    print('Updated item : {} with id {}'.format(item_to_update.name, item_to_update.id))
-
-    return redirect(url_for('get_category', category=item_to_update.category))
-
-
 @app.route('/category/<string:category>')
 def get_category(category):
     # Category is stored in lowercase letters only.
     category = category.lower()
     # Get all categories and their item count
-    all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
+    all_categories = _get_categories()
 
-    default_category = 'latest'
-    if category == default_category:
+    if category == LATEST_CATEGORY:
         # Get 10 most recently added items
-        items_in_category = session.query(Item).order_by(desc(Item.last_updated_on)).limit(10)
+        items_in_category = _get_latest_category_items()
     else:
         # Get all item rows in specified category
-        items_in_category = session.query(Item).filter_by(category=category).order_by(desc(Item.last_updated_on)).all()
+        items_in_category = _get_category_items(category=category, sort_on_column=Item.id)
 
     # If the category does not exist
     # redirect the user to login page.
@@ -329,9 +270,9 @@ def gconnect():
     login_session['provider'] = 'google'
 
     # see if user exists, if it doesn't make a new one
-    user_id = get_userid(res_json["email"])
+    user_id = _get_userid(res_json["email"])
     if not user_id:
-        user_id = create_user()
+        user_id = _create_user()
     login_session['user_id'] = user_id
 
     return _make_response('Google login successful', 200)
@@ -393,9 +334,9 @@ def fbconnect():
     login_session['picture'] = result_json["data"]["url"]
 
     # see if user exists
-    user_id = get_userid(login_session['email'])
+    user_id = _get_userid(login_session['email'])
     if not user_id:
-        user_id = create_user()
+        user_id = _create_user()
     login_session['user_id'] = user_id
 
     return _make_response('Facebook login successful', 200)
@@ -435,7 +376,81 @@ def disconnect():
     return _make_response('Logout successful', 200)
 
 
-def create_user():
+#######################################
+# Request processing helper functions #
+#######################################
+
+def _make_response(msg, error_code):
+    """
+    Helper function to build HTTP response.
+    :param msg: Message to include in the response
+    :param error_code: HTTP error code
+    :return: HTTP response.
+    """
+    res = make_response(json.dumps(msg), error_code)
+    res.headers['Content-Type'] = 'application/json'
+    return res
+
+
+def _process_item_image(item_image, keyword, feeling_lucky=False):
+    """
+    Performs necessary step to save the image file uploaded by the user.
+    If user has checked "I'm feeling lucky" checkbox, It uses bbid module
+    (Bulk Bing Image Downloader) to scrape a random image for the keyword.
+
+    Note that bbid fails to find an image if keyword is unusual or gibberish.
+
+    If user has uploaded an 
+    :param item_image:
+    :param keyword:
+    :param feeling_lucky:
+    :return:
+    """
+
+    # Url is updated below as necessary
+    item_img_url = 'images/default/no-logo.gif'
+    print("Is Feeling Lucky? ", feeling_lucky)
+
+    if item_image:
+        # Create new upload directory if necessary
+        upload_dir = pathlib.Path('static/images/uploads')
+        print("upload dir:", upload_dir)
+        if not upload_dir.exists():
+            upload_dir.mkdir(parents=True)
+
+        # Save the image with timestamp(for unique filename) to images/uploads directory
+        encoded_file_name = urllib.parse.quote(item_image.filename)
+        last_dot_index = encoded_file_name.rfind('.')
+        item_image_file_name = encoded_file_name[:last_dot_index] + '_' + \
+                               str(int(time.time())) + encoded_file_name[last_dot_index:]
+        item_image_file_path = upload_dir / item_image_file_name
+        print("image path :", item_image_file_path)
+
+        with open(str(item_image_file_path), 'wb') as f:
+            f.write(item_image.read())
+
+        # Create the url to be stored in DB
+        item_img_url = str(item_image_file_path)[7:]
+    elif feeling_lucky:
+        # Find a random image from bing if user is feeling lucky!
+        print('Fetching a random image for "{}" from bing'.format(keyword))
+        new_image_file_path = bbid.fetch_random_image_from_keyword(keyword=keyword, output_dir=RANDOM_IMAGE_DIR)
+        if new_image_file_path:
+            item_img_url = new_image_file_path[7:]
+        else:
+            print('Could not find bing image. Using default image.')
+    return item_img_url
+
+
+#############################
+# DB Query Helper functions #
+#############################
+
+def _create_user():
+    """
+    Creates a new user for the active session.
+    :return: id of the newly created user.
+    """
     new_user = User(name=login_session['username'], email=login_session[
         'email'], picture=login_session['picture'])
     session.add(new_user)
@@ -444,11 +459,58 @@ def create_user():
     return user.id
 
 
-def get_userid(email):
+def _get_userid(email):
+    """
+    Queries the database to find an user id for provided email.
+    :param email: email id of the user.
+    :return: user id of the first match in the Database.
+    """
     print("getting user with email:", email)
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
+    except:
+        return None
+
+
+def _get_category_items(category, sort_on_column=Item.last_updated_on):
+    """
+    Queries the database to fetch all the Items in the specified category.
+    :param category: Category of the items.
+    :param sort_on_column: Sorts the result based on specified column in Item table.
+    Default is last_updated_on column.
+    :return: Sorted list of Items.
+    """
+    try:
+        items_in_category = session.query(Item).filter_by(category=category).order_by(desc(sort_on_column)).all()
+        return items_in_category
+    except:
+        return None
+
+
+def _get_latest_category_items(sort_on_column=Item.last_updated_on, limit=MAX_ITEMS_IN_LATEST_CATEGORY):
+    """
+    Queries the database to fetch a list of most recently added/updated items.
+    :param sort_on_column: Sorts the result based on specified column in Item table.
+    Default is last_updated_on column.
+    :param limit: Maximum number of items to fetch.
+    :return: Sorted list of most recently added/updated items.
+    """
+    try:
+        latest_items = session.query(Item).order_by(desc(sort_on_column)).limit(limit)
+        return latest_items
+    except:
+        return None
+
+
+def _get_categories():
+    """
+    Queries the database to fetch a list of categories.
+    :return: A list of tuple containing [(<category_name>, <count_of_items_in_category>), ...]
+    """
+    try:
+        all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
+        return all_categories
     except:
         return None
 

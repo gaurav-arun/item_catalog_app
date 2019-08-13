@@ -326,7 +326,7 @@
                                             // // next time logout is triggered.
                                             // $('#loginLogoutBtn')[0].dataset.state = 'logout'
 
-                                            window.location.href = "/login_success"
+                                            window.location.href = "/login"
                                         },
                                         processData: false,
                                         data: authResult['code']
@@ -337,19 +337,6 @@
                             }
                         </script>
                         <!--Facebook-->
-                        <!-- <button type="button" class="btn btn-lg btn-white btn-rounded z-depth-1a fb-login-button"
-                            data-scope="public_profile,email" onclick="FB.login(checkLoginState)">
-                            <i class="fab fa-facebook-f text-center px-1"></i></button> -->
-                        <!-- <div
-                            class="fb-login-button btn"
-                            data-max-rows="1"
-                            data-size="medium"
-                            data-button-type="continue_with"
-                            data-width="40%"
-                            data-scope="public_profile, email"
-                            onclick="FB.login(checkLoginState)"
-                        ><i class="fab fa-facebook-f text-center px-1"></i></div> -->
-
                         <!-- Code taken from  https://developers.facebook.com/docs/facebook-login/web/ -->
                         <!-- Facebook button  https://developers.facebook.com/docs/facebook-login/web/login-button/ -->
                         <fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
@@ -421,7 +408,6 @@
                             // Here we run a very simple test of the Graph API after login is
                             // successful.  See statusChangeCallback() for when this call is made.
                             function sendTokenToServer(response_token) {
-                                var access_token = response_token//FB.getAuthResponse()['accessToken']
                                 console.log('Welcome!  Fetching your information.... ');
 
                                 // Close the login modal and wait for server redirect.
@@ -433,24 +419,13 @@
                                         type: 'POST',
                                         url: '/fbconnect?state={{STATE}}',
                                         processData: false,
-                                        data: access_token,
+                                        data: response_token,
                                         contentType: 'application/octet-stream; charset=utf-8',
                                         success: function (result) {
                                             // Handle or verify the server response if necessary.
                                             if (result) {
                                                 console.log('Login Successful!' + result + 'Redirecting...')
-
-                                                // $('#loginModalForm').modal("hide")
-                                                // $('#loginLogoutBtn').html("<span class=\"fas fa-sign-out-alt p-1\"></span>Logout")
-                                                // // Set the button state to logout so that when user clicks on it
-                                                // // next time logout is triggered.
-                                                // $('#loginLogoutBtn')[0].dataset.state = 'logout'
-
-                                                window.location.href = "/login_success";
-
-                                                // setTimeout(function () {
-                                                //     window.location.href = "/login_success";
-                                                // }, 2000);
+                                                window.location.href = "/login";
                                             } else {
                                                 console.log('Failed to make a server-side call. Check your configuration and console.');
                                             }
@@ -458,12 +433,6 @@
                                     });
                                 });
                             }
-
-                            function logMeOut() {
-                                console.log('Logout Successful')
-                                document.getElementById('status').innerHTML =
-                                    'You have been logged out!';
-                            };
                         </script>
                     </div>
                 </div>
@@ -530,7 +499,7 @@
                     <div class="card p-3 m-3 shadow" id="{{ item.id }}" style="width: 25em">
                         <img class="card-img-top img-thumbnail" id='{{item.id}}_img'
                             src="{{  url_for('static', filename=item.image) }}"
-                            alt="{{ url_for('static', filename='images/default/no-logo.gif') }}"
+                            alt="Image Could not be loaded."
                             style="margin-top: 2px; height: 25rem; border: none; border-radius: 0.5em">
                         <div class="card-body px-2 pb-0">
                             <h3 class="card-title title mb-0" id="{{item.id}}_tit">{{ item.name }}</h3>

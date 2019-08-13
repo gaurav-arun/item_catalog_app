@@ -1,37 +1,34 @@
-from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
-from flask import session as login_session
-from flask_uploads import UploadSet, configure_uploads, IMAGES
-
-from sqlalchemy import create_engine, desc, func
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm import sessionmaker
-from database_setup import Base, User, Item
-from bbid import bbid
+import datetime
+import json
 import os
 import pathlib
-import shutil
-import utils
-import urllib
 import time
-import datetime
+import urllib
 
-from oauth2client.client import flow_from_clientsecrets
-from oauth2client.client import FlowExchangeError
-
-import httplib2
-from oauth2client import client
-
-import json
-from flask import make_response
 import requests
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import make_response
+from flask import session as login_session
+from oauth2client.client import FlowExchangeError
+from oauth2client.client import flow_from_clientsecrets
+from sqlalchemy import create_engine, desc, func
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
 
-photos = UploadSet('photos', IMAGES)
+import utils
+from bbid import bbid
+from database_setup import Base, User, Item
 
 app = Flask(__name__)
 
 APPLICATION_NAME = "Item Catalog Application"
-CLIENT_SECRETS_FILE = 'client_secrets.json'
-CLIENT_ID = json.loads(open(CLIENT_SECRETS_FILE, 'r').read())['web']['client_id']
+
+GOOGLE_CLIENT_SECRETS_FILE = 'client_secrets.json'
+GOOGLE_CLIENT_ID = json.loads(open(GOOGLE_CLIENT_SECRETS_FILE, 'r').read())['web']['client_id']
+
+FB_CLIENT_SECRETS_FILE = 'fb_client_secrets.json'
+FB_APP_ID = json.loads(open(FB_CLIENT_SECRETS_FILE, 'r').read())['app_id']
+FB_APP_SECRET = json.loads(open(FB_CLIENT_SECRETS_FILE, 'r').read())['app_secret']
 
 # Connect to the database and create database session
 engine = create_engine('sqlite:///db/itemcatalog.db', connect_args={'check_same_thread': False})
@@ -62,26 +59,26 @@ def login():
                            CATEGORY_ITEMS=latest_items)
 
 
-@app.route('/login_success')
-def login_success():
-    # Get all categories and their item count
-    all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
-    # Get 10 most recently added items
-    default_category = 'latest'
-    latest_items = session.query(Item).order_by(desc(Item.last_updated_on)).limit(10)
+# @app.route('/login_success')
+# def login_success():
+#     # Get all categories and their item count
+#     all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
+#     # Get 10 most recently added items
+#     default_category = 'latest'
+#     latest_items = session.query(Item).order_by(desc(Item.last_updated_on)).limit(10)
+#
+#     return render_template('index.html',
+#                            STATE=login_session['state'],
+#                            LOGIN_SESSION=login_session,
+#                            ACTIVE_CATEGORY=default_category,
+#                            ALL_CATEGORIES=all_categories,
+#                            CATEGORY_ITEMS=latest_items)
 
-    return render_template('index.html',
-                           STATE=login_session['state'],
-                           LOGIN_SESSION=login_session,
-                           ACTIVE_CATEGORY=default_category,
-                           ALL_CATEGORIES=all_categories,
-                           CATEGORY_ITEMS=latest_items)
 
-
-def success_response(msg):
-    response = make_response(json.dumps(msg), 200)
-    response.headers['Content-Type'] = 'application/json'
-    return response
+def _get_response(msg, error_code):
+    res = make_response(json.dumps(msg), error_code)
+    res.headers['Content-Type'] = 'application/json'
+    return res
 
 
 @app.route('/add-item', methods=['POST'])
@@ -134,7 +131,7 @@ def add_item():
             print('Could not find bing image. Using default image.')
 
     # Create a new Item and save it in the database.
-    user_id = getUserID(login_session["email"])
+    user_id = get_userid(login_session["email"])
     new_item = Item(name=item_name,
                     category=item_cat.lower(),
                     description=item_desc,
@@ -177,7 +174,7 @@ def delete_item(item_id):
     session.commit()
     print('Deleted item : {} with id {}'.format(item_to_delete.name, item_to_delete.id))
 
-    return success_response('Item deleted successfully')
+    return _get_response('Item deleted successfully', 200)
 
 
 @app.route('/update-item/<string:item_id>', methods=['POST'])
@@ -262,6 +259,8 @@ def update_item(item_id):
 
 @app.route('/category/<string:category>')
 def get_category(category):
+    # Category is stored in lowercase letters only.
+    category = category.lower()
     # Get all categories and their item count
     all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
 
@@ -291,84 +290,67 @@ def get_category(category):
 def gconnect():
     # Validate state token
     if request.args.get('state') != login_session['state']:
-        response = make_response(json.dumps('Invalid state parameter.'), 401)
-        response.headers['Content-Type'] = 'application/json'
-        return response
-    # Obtain authorization code
-    code = request.data
+        return _get_response('Invalid state parameter', 401)
 
     try:
         # Upgrade the authorization code into a credentials object
         oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
         oauth_flow.redirect_uri = 'postmessage'
-        credentials = oauth_flow.step2_exchange(code)
+        credentials = oauth_flow.step2_exchange(request.data)
     except FlowExchangeError:
-        response = make_response(
-            json.dumps('Failed to upgrade the authorization code.'), 401)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return _get_response('Failed to upgrade the authorization code', 401)
 
     # Check that the access token is valid.
     access_token = credentials.access_token
 
-    url = ('https://www.googleapis.com/oauth2/v2/tokeninfo?access_token=%s'
-           % access_token)
+    url = ('https://www.googleapis.com/oauth2/v2/tokeninfo?access_token={}'.format(access_token))
     result = requests.get(url)
     # If there was an error in the access token info, abort.
     if result.status_code != 200:
-        response = make_response("Server side error", 500)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return _get_response('Failed to authorize with google server', 500)
 
-    result_j = result.json()
+    result_json = result.json()
     # Verify that the access token is used for the intended user.
-    gplus_id = credentials.id_token['sub']
-    if result_j['user_id'] != gplus_id:
-        response = make_response(
-            json.dumps("Token's user ID doesn't match given user ID."), 401)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+    google_id = credentials.id_token['sub']
+    if result_json['user_id'] != google_id:
+        return _get_response('Failed to validate user id', 401)
 
     # Verify that the access token is valid for this app.
-    if result_j['issued_to'] != CLIENT_ID:
-        response = make_response(
-            json.dumps("Token's client ID does not match app's."), 401)
-        print("Token's client ID does not match app's.")
-        response.headers['Content-Type'] = 'application/json'
-        return response
+    if result_json['issued_to'] != GOOGLE_CLIENT_ID:
+        return _get_response('Failed to validate client id', 401)
 
     stored_access_token = login_session.get('access_token')
-    stored_gplus_id = login_session.get('gplus_id')
-    if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
-                                 200)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+    stored_google_id = login_session.get('google_id')
+    if stored_access_token is not None and google_id == stored_google_id:
+        return _get_response('User is already connected.', 200)
 
     # Store the access token in the session for later use.
     login_session['access_token'] = credentials.access_token
-    login_session['gplus_id'] = gplus_id
+    login_session['google_id'] = google_id
 
     # Get user info
     userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo"
-    params = {'access_token': credentials.access_token, 'alt': 'json'}
-    answer = requests.get(userinfo_url, params=params)
+    params = {
+        'access_token': credentials.access_token,
+        'alt': 'json'
+    }
 
-    data = answer.json()
+    res = requests.get(userinfo_url, params=params)
+    res_json = res.json()
 
-    login_session['username'] = data['name']
-    login_session['picture'] = data['picture']
-    login_session['email'] = data['email']
+    login_session['username'] = res_json['name']
+    login_session['picture'] = res_json['picture']
+    login_session['email'] = res_json['email']
     # ADD PROVIDER TO LOGIN SESSION
     login_session['provider'] = 'google'
 
     # see if user exists, if it doesn't make a new one
-    user_id = getUserID(data["email"])
+    user_id = get_userid(res_json["email"])
     if not user_id:
-        user_id = createUser(login_session)
+        user_id = create_user()
     login_session['user_id'] = user_id
 
-    return success_response('Google login successful')
+    return _get_response('Google login successful', 200)
 
 
 @app.route('/gdisconnect')
@@ -381,40 +363,27 @@ def gdisconnect():
     # Only disconnect a connected user.
     access_token = login_session.get('access_token')
     if access_token is None:
-        response = make_response(
-            json.dumps('Current user not connected.'), 401)
-        response.headers['Content-Type'] = 'application/json'
-        return response
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access_token
-    h = httplib2.Http()
-    result = h.request(url, 'GET')[0]
-    if result['status'] == '200':
-        response = make_response(json.dumps('Successfully disconnected.'), 200)
-        response.headers['Content-Type'] = 'application/json'
-        print('Google logout successful')
-        return response
-    else:
-        response = make_response(json.dumps('Failed to revoke token for given user.', 400))
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return _get_response('User is not connected', 401)
+
+    url = 'https://accounts.google.com/o/oauth2/revoke?token={}'.format(access_token)
+    result = requests.get(url)
+    if result.status_code != '200':
+        return _get_response('Failed to disconnect from google.', 400)
+
+    return _get_response('User disconnected from google.', 200)
 
 
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
     if request.args.get('state') != login_session['state']:
-        response = make_response(json.dumps('Invalid state parameter.'), 401)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return _get_response('Invalid state parameter', 401)
+
     access_token = request.data.decode('ascii')
     print("access token received %s " % access_token)
 
-    app_id = json.loads(open('fb_client_secrets.json', 'r').read())['app_id']
-    app_secret = json.loads(
-        open('fb_client_secrets.json', 'r').read())['app_secret']
     url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&' \
-          'client_id=%s&client_secret=%s&fb_exchange_token=%s' % (app_id, app_secret, access_token)
-    # h = httplib2.Http()
-    # result = h.request(url, 'GET')[1]
+          'client_id=%s&client_secret=%s&fb_exchange_token=%s' % (FB_APP_ID, FB_APP_SECRET, access_token)
+
     result = requests.get(url).json()
     # Use token to get user info from API
     '''
@@ -424,41 +393,34 @@ def fbconnect():
         and replace the remaining quotes with nothing so that it can be used directly in the graph
         api calls
     '''
-    token = result['access_token']  # 'result.split(',')[0].split(':')[1].replace('"', '')
+    client_token = result['access_token']  # 'result.split(',')[0].split(':')[1].replace('"', '')
 
-    url = 'https://graph.facebook.com/v4.0/me?access_token=%s&fields=name,id,email' % token
+    url = 'https://graph.facebook.com/v4.0/me?access_token={}&fields=name,id,email'.format(client_token)
     result = requests.get(url)
-    # h = httplib2.Http()
-    # result = h.request(url, 'GET')[1]
-    # print("url sent for API access:%s"% url)
-    # print("API JSON result: %s" % result)
 
-    data = result.json()
+    result_json = result.json()
     login_session['provider'] = 'facebook'
-    login_session['username'] = data["name"]
-    login_session['email'] = data["email"]
-    login_session['facebook_id'] = data["id"]
+    login_session['username'] = result_json["name"]
+    login_session['email'] = result_json["email"]
+    login_session['facebook_id'] = result_json["id"]
 
     # The token must be stored in the login_session in order to properly logout
-    login_session['access_token'] = token
+    login_session['access_token'] = client_token
 
     # Get user picture
-    url = 'https://graph.facebook.com/v4.0/me/picture?access_token=%s&redirect=0&height=200&width=200' % token
+    url = 'https://graph.facebook.com/v4.0/me/picture?access_token={}&redirect=0&height=200&width=200'.format(
+        client_token)
     result = requests.get(url)
-    data = result.json()
-    # h = httplib2.Http()
-    # result = h.request(url, 'GET')[1]
-    # data = json.loads(result)
-
-    login_session['picture'] = data["data"]["url"]
+    result_json = result.json()
+    login_session['picture'] = result_json["data"]["url"]
 
     # see if user exists
-    user_id = getUserID(login_session['email'])
+    user_id = get_userid(login_session['email'])
     if not user_id:
-        user_id = createUser(login_session)
+        user_id = create_user()
     login_session['user_id'] = user_id
 
-    return success_response('Facebook login successful')
+    return _get_response('Facebook login successful', 200)
 
 
 @app.route('/fbdisconnect')
@@ -466,11 +428,12 @@ def fbdisconnect():
     facebook_id = login_session['facebook_id']
     # The access token must me included to successfully logout
     access_token = login_session['access_token']
-    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id, access_token)
-    h = httplib2.Http()
-    result = h.request(url, 'DELETE')[1]
-    print('Facebook logout successful')
-    return success_response('Facebook logout successful')
+    url = 'https://graph.facebook.com/{}/permissions?access_token={}'.format(facebook_id, access_token)
+    result = requests.delete(url)
+    if result.status_code != 200:
+        return _get_response('Failed to disconnect from facebook', 401)
+
+    return _get_response('Facebook logout successful', 200)
 
 
 # Disconnect based on provider
@@ -479,38 +442,31 @@ def disconnect():
     if 'provider' in login_session:
         if login_session['provider'] == 'google':
             gdisconnect()
-            del login_session['gplus_id']
+            del login_session['google_id']
             del login_session['access_token']
-        if login_session['provider'] == 'facebook':
+        elif login_session['provider'] == 'facebook':
             fbdisconnect()
             del login_session['facebook_id']
+
         del login_session['username']
         del login_session['email']
         del login_session['picture']
         del login_session['user_id']
         del login_session['provider']
-        print("You have successfully been logged out.")
-    else:
-        print("You were not logged in")
 
-    return success_response('Logout successful')
+    return _get_response('Logout successful', 200)
 
 
-def createUser(login_session):
-    newUser = User(name=login_session['username'], email=login_session[
+def create_user():
+    new_user = User(name=login_session['username'], email=login_session[
         'email'], picture=login_session['picture'])
-    session.add(newUser)
+    session.add(new_user)
     session.commit()
     user = session.query(User).filter_by(email=login_session['email']).one()
     return user.id
 
 
-def getUserInfo(user_id):
-    user = session.query(User).filter_by(id=user_id).one()
-    return user
-
-
-def getUserID(email):
+def get_userid(email):
     print("getting user with email:", email)
     try:
         user = session.query(User).filter_by(email=email).one()

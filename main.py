@@ -6,8 +6,8 @@ import time
 import urllib
 
 import requests
-from flask import Flask, render_template, request, redirect, url_for, flash
-from flask import make_response
+from flask import Flask, render_template, request, jsonify
+from flask import make_response, redirect, url_for, flash
 from flask import session as login_session
 from oauth2client.client import FlowExchangeError
 from oauth2client.client import flow_from_clientsecrets
@@ -42,9 +42,18 @@ LATEST_CATEGORY = 'latest'
 MAX_ITEMS_IN_LATEST_CATEGORY = 10
 
 
+##################
+# View functions #
+##################
+
 @app.route('/')
 @app.route('/login/')
 def login():
+    """
+    View function to render the default page to the user.
+    Enables the user to login using Google or Facebook OAuth provider.
+    :return:
+    """
     state = utils.get_random_state()
     login_session['state'] = state
 
@@ -63,6 +72,11 @@ def login():
 
 @app.route('/add-item', methods=['POST'])
 def add_item():
+    """
+    View function to add an item to the database.
+    User must be logged in to perform this operation.
+    :return:
+    """
     if 'username' not in login_session:
         return redirect('/login')
 
@@ -96,6 +110,12 @@ def add_item():
 
 @app.route('/update-item/<string:item_id>', methods=['POST'])
 def update_item(item_id):
+    """
+    View function to update an item.
+    User must be logged in to perform this operation.
+    :param item_id: id of the item being updated.
+    :return:
+    """
     # Check if user is logged in
     if 'username' not in login_session:
         print('User not logged in')
@@ -153,6 +173,13 @@ def update_item(item_id):
 
 @app.route('/delete-item/<string:item_id>', methods=['DELETE'])
 def delete_item(item_id):
+    """
+    View function for deleting an item from the database.
+    User must be logged in to perform this operation.
+
+    :param item_id: id of the item up for deletion.
+    :return:
+    """
     # Check if user is logged in
     if 'username' not in login_session:
         print('User not logged in')
@@ -185,6 +212,11 @@ def delete_item(item_id):
 
 @app.route('/category/<string:category>')
 def get_category(category):
+    """
+    View function for rendering category items.
+    :param category: Category chosen by the user. Defaults to 'latest' category.
+    :return:
+    """
     # Category is stored in lowercase letters only.
     category = category.lower()
     # Get all categories and their item count
@@ -213,6 +245,10 @@ def get_category(category):
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
+    """
+    Helper function to log user in using Google OAuth
+    :return:
+    """
     # Validate state token
     if request.args.get('state') != login_session['state']:
         return _make_response('Invalid state parameter', 401)
@@ -281,8 +317,8 @@ def gconnect():
 @app.route('/gdisconnect')
 def gdisconnect():
     """
+    Helper function to log user out from Google
     Reference : https://developers.google.com/identity/protocols/OAuth2WebServer
-    # Scroll down to the bottom or search 'revoke'
     :return:
     """
     # Only disconnect a connected user.
@@ -300,6 +336,10 @@ def gdisconnect():
 
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
+    """
+    Helper function to log user in using Facebook OAuth
+    :return:
+    """
     if request.args.get('state') != login_session['state']:
         return _make_response('Invalid state parameter', 401)
 
@@ -344,6 +384,10 @@ def fbconnect():
 
 @app.route('/fbdisconnect')
 def fbdisconnect():
+    """
+    Helper function to log user out from facebook
+    :return:
+    """
     facebook_id = login_session['facebook_id']
     # The access token must me included to successfully logout
     access_token = login_session['access_token']
@@ -358,6 +402,10 @@ def fbdisconnect():
 # Disconnect based on provider
 @app.route('/disconnect')
 def disconnect():
+    """
+    Disconnects the user from OAuth provider and resets the session
+    :return:
+    """
     if 'provider' in login_session:
         if login_session['provider'] == 'google':
             gdisconnect()
@@ -374,6 +422,53 @@ def disconnect():
         del login_session['provider']
 
     return _make_response('Logout successful', 200)
+
+
+#########################################
+# JSON APIs to view Catalog Information #
+#########################################
+
+
+@app.route('/api/v1/catalog/json')
+def catalog_json():
+    """
+    API for fetching all the items in the Item table.
+    :return: All items in item table JSON.
+    """
+    all_items = _get_all_items()
+    return jsonify(Items=[item.serialize for item in all_items])
+
+
+@app.route('/api/v1/category/json')
+def category_json():
+    """
+    API for fetching all categories in the Item table.
+    :return: All categories and count of items as JSON.
+    """
+    all_categories = _get_categories()
+    return jsonify(Categories={category: count for category, count in all_categories})
+
+
+@app.route('/api/v1/category/<string:category>/json')
+def category_items_json(category):
+    """
+    API for fetching all items in the specified category.
+    :param category: category for which items are requested.
+    :return: All items in specified category as JSON.
+    """
+    category_items = _get_category_items(category, sort_on_column=Item.id)
+    return jsonify(count=len(category_items), Items=[item.serialize for item in category_items])
+
+
+@app.route('/api/v1/item/<string:item_id>/json')
+def item_json(item_id):
+    """
+    API for fetching an item with specified id
+    :param item_id: id of the item
+    :return: One item with matching id as JSON.
+    """
+    item = _get_item(item_id)
+    return jsonify(Item=item.serialize) if item else jsonify({})
 
 
 #######################################
@@ -394,14 +489,14 @@ def _make_response(msg, error_code):
 
 def _process_item_image(item_image, keyword, feeling_lucky=False):
     """
-    Performs necessary step to save the image file uploaded by the user.
+    Performs necessary steps to save the image file uploaded by the user.
     If user has checked "I'm feeling lucky" checkbox, and has not uploaded
     an image, bbid module (Bulk Bing Image Downloader) is used to download
     a random image for the keyword using bing image search.
 
     Note that bbid usually fails to find an image if keyword is unusual or gibberish.
 
-    Sometimes bbid fails to find and image even of most common nouns. In such cases
+    Sometimes bbid fails to find and image even for most common nouns. In such cases
     a default image is used.
 
     If user has uploaded an image as well as checked the feeling lucky checkbox,
@@ -477,6 +572,31 @@ def _get_userid(email):
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
+    except:
+        return None
+
+
+def _get_item(item_id):
+    """
+    Queries the database to find an item with specified id
+    :param item_id: id of the item
+    :return: first item with matching id
+    """
+    try:
+        item = session.query(Item).filter_by(id=item_id).one()
+        return item
+    except:
+        return None
+
+
+def _get_all_items():
+    """
+    Queries the database to fetch all items.
+    :return: A list of items.
+    """
+    try:
+        all_items = session.query(Item).all()
+        return all_items
     except:
         return None
 

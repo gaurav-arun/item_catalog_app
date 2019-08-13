@@ -59,23 +59,7 @@ def login():
                            CATEGORY_ITEMS=latest_items)
 
 
-# @app.route('/login_success')
-# def login_success():
-#     # Get all categories and their item count
-#     all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
-#     # Get 10 most recently added items
-#     default_category = 'latest'
-#     latest_items = session.query(Item).order_by(desc(Item.last_updated_on)).limit(10)
-#
-#     return render_template('index.html',
-#                            STATE=login_session['state'],
-#                            LOGIN_SESSION=login_session,
-#                            ACTIVE_CATEGORY=default_category,
-#                            ALL_CATEGORIES=all_categories,
-#                            CATEGORY_ITEMS=latest_items)
-
-
-def _get_response(msg, error_code):
+def _make_response(msg, error_code):
     res = make_response(json.dumps(msg), error_code)
     res.headers['Content-Type'] = 'application/json'
     return res
@@ -174,7 +158,7 @@ def delete_item(item_id):
     session.commit()
     print('Deleted item : {} with id {}'.format(item_to_delete.name, item_to_delete.id))
 
-    return _get_response('Item deleted successfully', 200)
+    return _make_response('Item deleted successfully', 200)
 
 
 @app.route('/update-item/<string:item_id>', methods=['POST'])
@@ -290,7 +274,7 @@ def get_category(category):
 def gconnect():
     # Validate state token
     if request.args.get('state') != login_session['state']:
-        return _get_response('Invalid state parameter', 401)
+        return _make_response('Invalid state parameter', 401)
 
     try:
         # Upgrade the authorization code into a credentials object
@@ -298,7 +282,7 @@ def gconnect():
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(request.data)
     except FlowExchangeError:
-        return _get_response('Failed to upgrade the authorization code', 401)
+        return _make_response('Failed to upgrade the authorization code', 401)
 
     # Check that the access token is valid.
     access_token = credentials.access_token
@@ -307,22 +291,22 @@ def gconnect():
     result = requests.get(url)
     # If there was an error in the access token info, abort.
     if result.status_code != 200:
-        return _get_response('Failed to authorize with google server', 500)
+        return _make_response('Failed to authorize with google server', 500)
 
     result_json = result.json()
     # Verify that the access token is used for the intended user.
     google_id = credentials.id_token['sub']
     if result_json['user_id'] != google_id:
-        return _get_response('Failed to validate user id', 401)
+        return _make_response('Failed to validate user id', 401)
 
     # Verify that the access token is valid for this app.
     if result_json['issued_to'] != GOOGLE_CLIENT_ID:
-        return _get_response('Failed to validate client id', 401)
+        return _make_response('Failed to validate client id', 401)
 
     stored_access_token = login_session.get('access_token')
     stored_google_id = login_session.get('google_id')
     if stored_access_token is not None and google_id == stored_google_id:
-        return _get_response('User is already connected.', 200)
+        return _make_response('User is already connected.', 200)
 
     # Store the access token in the session for later use.
     login_session['access_token'] = credentials.access_token
@@ -350,7 +334,7 @@ def gconnect():
         user_id = create_user()
     login_session['user_id'] = user_id
 
-    return _get_response('Google login successful', 200)
+    return _make_response('Google login successful', 200)
 
 
 @app.route('/gdisconnect')
@@ -363,39 +347,33 @@ def gdisconnect():
     # Only disconnect a connected user.
     access_token = login_session.get('access_token')
     if access_token is None:
-        return _get_response('User is not connected', 401)
+        return _make_response('User is not connected', 401)
 
     url = 'https://accounts.google.com/o/oauth2/revoke?token={}'.format(access_token)
     result = requests.get(url)
     if result.status_code != '200':
-        return _get_response('Failed to disconnect from google.', 400)
+        return _make_response('Failed to disconnect from google.', 400)
 
-    return _get_response('User disconnected from google.', 200)
+    return _make_response('User disconnected from google.', 200)
 
 
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
     if request.args.get('state') != login_session['state']:
-        return _get_response('Invalid state parameter', 401)
+        return _make_response('Invalid state parameter', 401)
 
-    access_token = request.data.decode('ascii')
-    print("access token received %s " % access_token)
+    client_token = request.data.decode('ascii')
+    print("Client token received {}".format(client_token))
 
     url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&' \
-          'client_id=%s&client_secret=%s&fb_exchange_token=%s' % (FB_APP_ID, FB_APP_SECRET, access_token)
-
+          'client_id={}&client_secret={}&fb_exchange_token={}'.format(FB_APP_ID,
+                                                                      FB_APP_SECRET,
+                                                                      client_token)
     result = requests.get(url).json()
-    # Use token to get user info from API
-    '''
-        Due to the formatting for the result from the server token exchange we have to
-        split the token first on commas and select the first index which gives us the key : value
-        for the server access token then we split it on colons to pull out the actual token value
-        and replace the remaining quotes with nothing so that it can be used directly in the graph
-        api calls
-    '''
-    client_token = result['access_token']  # 'result.split(',')[0].split(':')[1].replace('"', '')
+    access_token = result['access_token']
 
-    url = 'https://graph.facebook.com/v4.0/me?access_token={}&fields=name,id,email'.format(client_token)
+    # Use token to get user info from API
+    url = 'https://graph.facebook.com/v4.0/me?access_token={}&fields=name,id,email'.format(access_token)
     result = requests.get(url)
 
     result_json = result.json()
@@ -405,7 +383,7 @@ def fbconnect():
     login_session['facebook_id'] = result_json["id"]
 
     # The token must be stored in the login_session in order to properly logout
-    login_session['access_token'] = client_token
+    login_session['access_token'] = access_token
 
     # Get user picture
     url = 'https://graph.facebook.com/v4.0/me/picture?access_token={}&redirect=0&height=200&width=200'.format(
@@ -420,7 +398,7 @@ def fbconnect():
         user_id = create_user()
     login_session['user_id'] = user_id
 
-    return _get_response('Facebook login successful', 200)
+    return _make_response('Facebook login successful', 200)
 
 
 @app.route('/fbdisconnect')
@@ -431,9 +409,9 @@ def fbdisconnect():
     url = 'https://graph.facebook.com/{}/permissions?access_token={}'.format(facebook_id, access_token)
     result = requests.delete(url)
     if result.status_code != 200:
-        return _get_response('Failed to disconnect from facebook', 401)
+        return _make_response('Failed to disconnect from facebook', 401)
 
-    return _get_response('Facebook logout successful', 200)
+    return _make_response('Facebook logout successful', 200)
 
 
 # Disconnect based on provider
@@ -454,7 +432,7 @@ def disconnect():
         del login_session['user_id']
         del login_session['provider']
 
-    return _get_response('Logout successful', 200)
+    return _make_response('Logout successful', 200)
 
 
 def create_user():

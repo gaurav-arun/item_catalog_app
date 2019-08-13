@@ -395,16 +395,24 @@ def _make_response(msg, error_code):
 def _process_item_image(item_image, keyword, feeling_lucky=False):
     """
     Performs necessary step to save the image file uploaded by the user.
-    If user has checked "I'm feeling lucky" checkbox, It uses bbid module
-    (Bulk Bing Image Downloader) to scrape a random image for the keyword.
+    If user has checked "I'm feeling lucky" checkbox, and has not uploaded
+    an image, bbid module (Bulk Bing Image Downloader) is used to download
+    a random image for the keyword using bing image search.
 
-    Note that bbid fails to find an image if keyword is unusual or gibberish.
+    Note that bbid usually fails to find an image if keyword is unusual or gibberish.
 
-    If user has uploaded an 
-    :param item_image:
-    :param keyword:
-    :param feeling_lucky:
-    :return:
+    Sometimes bbid fails to find and image even of most common nouns. In such cases
+    a default image is used.
+
+    If user has uploaded an image as well as checked the feeling lucky checkbox,
+    image uploaded by the user is retained and bing search for a random image is not
+    performed.
+
+    :param item_image: Image received in the post request.
+    :param keyword: Keyword used to perform a Bing Image Search for a random image.
+    :param feeling_lucky: Random image search for keyword is  performed only if
+    this is set to true.
+    :return: url of the image in application's context.
     """
 
     # Url is updated below as necessary

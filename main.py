@@ -81,10 +81,10 @@ def add_item():
     if 'username' not in login_session:
         return redirect('/login')
 
-    item_img = request.files['item_img']
-    item_name = request.form['item_name']
-    item_cat = request.form['item_cat']
-    item_desc = request.form['item_desc']
+    item_img = request.files['item-image']
+    item_name = request.form['item-name']
+    item_cat = request.form['item-category']
+    item_desc = request.form['item-description']
 
     if not item_name or not item_cat or not item_desc:
         print('One or more field(s) are empty!')
@@ -135,11 +135,11 @@ def update_item(item_id):
         return redirect(url_for('login'))
 
     # item_img is empty if user has not uploaded a new image.
-    item_img = request.files['item_img']
+    item_img = request.files['item-image']
 
-    item_name = request.form['item_name']
-    item_cat = request.form['item_cat']
-    item_desc = request.form['item_desc']
+    item_name = request.form['item-name']
+    item_cat = request.form['item-category']
+    item_desc = request.form['item-description']
 
     if not item_name or not item_cat or not item_desc:
         print('One or more field(s) are empty!')
@@ -322,7 +322,6 @@ def gconnect():
 def gdisconnect():
     """
     Helper function to log user out from Google
-    Reference : https://developers.google.com/identity/protocols/OAuth2WebServer
     :return:
     """
     # Only disconnect a connected user.

@@ -31,37 +31,44 @@
 </head>
 
 <script type="text/javascript">
-    function HandleBrowseClick(input_image) {
+    // Launches the explorer window for user to select
+    // an image to upload.
+    function handleBrowseClick(input_image) {
         var fileinput = document.getElementById(input_image);
         fileinput.click();
     }
 
+    // Updates the content of Add Item Modal with
+    // corresponding Item details.
     function editItemModalWindow(button) {
         itemId = button.dataset.editid;
-        item_img_id = '#' + itemId + '_img';
-        item_title_id = '#' + itemId + '_tit';
-        item_cat_id = '#' + itemId + '_cat';
-        item_desc_id = '#' + itemId + '_desc';
-        $('#add-item-title')[0].innerText = "Edit Item"
-        $('#add-item-form')[0].action = "/update-item/" + itemId
-        $('#add-item-image-preview')[0].src = $(item_img_id)[0].src
-        $('#add-item-tit').val($(item_title_id)[0].innerText)
+        itemImgId = '#' + itemId + '_img';
+        itemTitleId = '#' + itemId + '_tit';
+        itemCatId = '#' + itemId + '_cat';
+        itemDescId = '#' + itemId + '_desc';
+        $('#itemTitle')[0].innerText = "Edit Item"
+        $('#itemForm')[0].action = "/update-item/" + itemId
+        $('#itemImagePreview')[0].src = $(itemImgId)[0].src
+        $('#itemTit').val($(itemTitleId)[0].innerText)
 
-        itemCatnId = $(item_cat_id)[0].innerText;
+        itemCatnId = $(itemCatId)[0].innerText;
         itemCat = itemCatnId.slice(0, itemCatnId.lastIndexOf(':') - 1)
-        $('#add-item-cat').val(itemCat)
+        $('#itemCat').val(itemCat)
 
-        $('#add-item-desc').val($(item_desc_id)[0].innerText)
-        $('#addItemModal').modal("show")
+        $('#itemDesc').val($(itemDescId)[0].innerText)
+        $('#add-item-btn').html("Update")
+        $('#itemModal').modal("show")
     }
 
-    function resetAddItemModal() {
-        $('#add-item-title')[0].innerText = "Add New Item"
-        $('#add-item-form')[0].action = "{{ url_for('add_item') }}";
-        $('#add-item-image-preview')[0].src = "{{ url_for('static', filename='images/default/no-logo.gif') }}";
-        $('#add-item-tit').val('');
-        $('#add-item-cat').val('');
-        $('#add-item-desc').val('');
+    // Resets the Add Item Modal to default state.
+    function resetItemModal() {
+        $('#itemTitle')[0].innerText = "Add Item"
+        $('#itemForm')[0].action = "{{ url_for('add_item') }}";
+        $('#itemImagePreview')[0].src = "{{ url_for('static', filename='images/default/no-logo.gif') }}";
+        $('#add-item-btn').html("Add")
+        $('#itemTit').val('');
+        $('#itemCat').val('');
+        $('#itemDesc').val('');
     }
 
     // Updates the content of Delete Item Modal to 
@@ -102,14 +109,14 @@
 
     // Register for hide modal event and clear all  fields.
     $(document).ready(function () {
-        $("#addItemModal").on('hide.bs.modal', function () {
+        $("#itemModal").on('hide.bs.modal', function () {
             console.log('Hide event: Clearing add item modal')
-            resetAddItemModal();
+            resetItemModal();
         });
 
         $("#add-item-btn").click(function () {
             console.log('Submitting Add item form...')
-            $('#add-item-form').submit()
+            $('#itemForm').submit()
         });
 
         $("#delItemModal").on('hide.bs.modal', function () {
@@ -147,7 +154,7 @@
             <img src="{{ url_for('static', filename='images/default/no_user_image.png') }}"
                 class="rounded-circle float-right profile-pic" width="40px" height="40px">
             {% else %}
-            <button class="btn btn-light ml-5" data-toggle="modal" data-target="#addItemModal">
+            <button class="btn btn-light ml-5" data-toggle="modal" data-target="#itemModal">
                 <span class="fas fa-plus p-1"></span>Add Item
             </button>
             <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
@@ -157,32 +164,33 @@
             {% endif %}
         </div>
     </nav>
-    <!-- The Add New Item Modal -->
-    <div class="modal fade" id="addItemModal">
+    
+    <!-- The Item Modal: Used for both Adding Items and Editing/Updating an Item. -->
+    <div class="modal fade" id="itemModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
 
                 <!-- Modal Header -->
                 <div class="modal-header">
-                    <h4 id="add-item-title" class="modal-title">Add Item</h4>
+                    <h4 id="itemTitle" class="modal-title">Add Item</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
 
                 <!-- Modal body -->
                 <div class="modal-body">
                     <div class="container">
-                        <form method="POST" id="add-item-form" action="{{ url_for('add_item') }}"
+                        <form method="POST" id="itemForm" action="{{ url_for('add_item') }}"
                             enctype="multipart/form-data">
                             <div class="form-group text-center">
-                                <img class="img-thumbnail item-img" id="add-item-image-preview"
+                                <img class="img-thumbnail item-img" id="itemImagePreview"
                                     src="{{ url_for('static', filename='images/default/no-logo.gif') }}" alt="No Image">
 
-                                <input style="display:none" id="input-image-hidden" name="item_img"
-                                    onchange="document.getElementById('add-item-image-preview').src = window.URL.createObjectURL(this.files[0])"
+                                <input style="display:none" id="inputImageHidden" name="item-image"
+                                    onchange="document.getElementById('itemImagePreview').src = window.URL.createObjectURL(this.files[0])"
                                     type="file" accept="image/jpeg, image/png">
                                 <div class="form-check">
-                                    <button class="btn btn-outline-dark btn-sm float-left ml-1" id="add-item-upload-btn"
-                                        onclick="HandleBrowseClick('input-image-hidden'); return false;">
+                                    <button class="btn btn-outline-dark btn-sm float-left ml-1" id="itemUploadBtn"
+                                        onclick="handleBrowseClick('inputImageHidden'); return false;">
                                         Upload an image</button>
 
                                     <label class="form-check-label float-right mr-4">
@@ -195,21 +203,22 @@
 
 
                             <div class="form-group mt-5">
-                                <label for="add-item-tit">Name</label>
-                                <input type="text" class="form-control" id="add-item-tit" name="item_name">
+                                <label for="itemTit">Name</label>
+                                <input type="text" class="form-control" id="itemTit" name="item-name">
                                 <small id="name-help" class="form-text text-muted">Best item names are concise and a
                                     noun.</small>
                             </div>
                             <div class="form-group">
-                                <label for="add-item-cat">Category</label>
-                                <input type="text" class="form-control" id="add-item-cat" name="item_cat">
+                                <label for="itemCat">Category</label>
+                                <input type="text" class="form-control" id="itemCat" name="item-category">
                                 <small id="cat-help" class="form-text text-muted">Category names are case-insensitive. A
                                     new category will be created if it
                                     does not exist.</small>
                             </div>
                             <div class="form-group">
-                                <label for="add-item-desc">Description</label>
-                                <textarea class="form-control" id="add-item-desc" rows="3" name="item_desc"></textarea>
+                                <label for="itemDesc">Description</label>
+                                <textarea class="form-control" id="itemDesc" rows="3"
+                                    name="item-description"></textarea>
                                 <small id="name-help" class="form-text text-muted">Provide a brief description of this
                                     item.</small>
                             </div>

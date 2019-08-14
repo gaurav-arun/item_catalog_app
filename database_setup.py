@@ -35,6 +35,7 @@ class Item(Base):
             'name': self.name,
             'category': self.category,
             'description': self.description,
+            'image': self.image,
             'created by': {
                 'id': self.user.id,
                 'username': self.user.name

@@ -436,7 +436,7 @@ def catalog_json():
     :return: All items in item table JSON.
     """
     all_items = _get_all_items()
-    return jsonify(Items=[item.serialize for item in all_items])
+    return jsonify(Items=[item.serialize for item in all_items], count=len(all_items))
 
 
 @app.route('/api/v1/category/json')
@@ -468,7 +468,7 @@ def item_json(item_id):
     :return: One item with matching id as JSON.
     """
     item = _get_item(item_id)
-    return jsonify(Item=item.serialize) if item else jsonify({})
+    return jsonify(Item=item.serialize) if item else jsonify({'error': 'Item not found'})
 
 
 #######################################

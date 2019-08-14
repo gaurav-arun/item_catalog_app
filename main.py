@@ -19,6 +19,7 @@ import utils
 from bbid import bbid
 from database_setup import Base, User, Item
 
+
 app = Flask(__name__)
 
 APPLICATION_NAME = "Item Catalog Application"

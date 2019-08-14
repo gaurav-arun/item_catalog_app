@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
@@ -24,46 +25,6 @@
         }
     </script>
 </head>
-
-<style>
-    li {
-        font-size: 20px;
-    }
-
-    li:hover {
-        background-color: #b8b8b8;
-        border-radius: 4px;
-    }
-
-    /* Login modal css */
-    .form-elegant .font-small {
-        font-size: 0.8rem;
-    }
-
-    .form-elegant .z-depth-1a {
-        -webkit-box-shadow: 0 2px 5px 0 rgba(55, 161, 255, 0.26), 0 4px 12px 0 rgba(121, 155, 254, 0.25);
-        box-shadow: 0 2px 5px 0 rgba(55, 161, 255, 0.26), 0 4px 12px 0 rgba(121, 155, 254, 0.25);
-    }
-
-    .form-elegant .z-depth-1-half,
-    .form-elegant .btn:hover {
-        -webkit-box-shadow: 0 5px 11px 0 rgba(85, 182, 255, 0.28), 0 4px 15px 0 rgba(36, 133, 255, 0.15);
-        box-shadow: 0 5px 11px 0 rgba(85, 182, 255, 0.28), 0 4px 15px 0 rgba(36, 133, 255, 0.15);
-    }
-
-    .form-elegant .modal-header {
-        border-bottom: none;
-    }
-
-    .modal-dialog .form-elegant .btn .fab {
-        color: #2196f3 !important;
-    }
-
-    .form-elegant .modal-body,
-    .form-elegant .modal-footer {
-        font-weight: 400;
-    }
-</style>
 
 <script type="text/javascript">
     function HandleBrowseClick(input_image) {
@@ -153,24 +114,22 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-sm sticky-top shadow" style="background-color: #3f4959 ">
-        <div class="navbar-brand fas fa-scroll" style="color: white; font-size: xx-large; height: 50px; width: 50px">
+    <nav class="navbar navbar-expand-sm sticky-top shadow banner">
+        <div class="navbar-brand fas fa-scroll banner-brand">
             CatalogApp</div>
-        <div style="width:100%; margin-left: 13rem; margin-right:2.5rem">
+        <div class="banner-buttons-container">
             {% if not LOGIN_SESSION.get('username') %}
             <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
                 data-state="login"><span class="fas fa-sign-in-alt p-1"></span>Login</button>
             <img src="{{ url_for('static', filename='images/default/no_user_image.png') }}"
-                class="rounded-circle float-right" width="40px" height="40px"
-                style="margin-right: 10px; vertical-align: center">
+                class="rounded-circle float-right profile-pic" width="40px" height="40px">
             {% else %}
             <button class="btn btn-light ml-5" data-toggle="modal" data-target="#addItemModal">
                 <span class="fas fa-plus p-1"></span>Add Item
             </button>
             <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
                 data-state="logout"><span class="fas fa-sign-out-alt p-1"></span>Logout</button>
-            <img src="{{ LOGIN_SESSION['picture'] }}" class="rounded-circle float-right" width="40px" height="40px"
-                style="margin-right: 10px; vertical-align: center">
+            <img src="{{ LOGIN_SESSION['picture'] }}" class="rounded-circle float-right profile-pic" width="40px" height="40px">
             {% endif %}
             <script>
                 // This function handles login and logout logic for
@@ -208,8 +167,7 @@
                         <form method="POST" id="add-item-form" action="{{ url_for('add_item') }}"
                             enctype="multipart/form-data">
                             <div class="form-group text-center">
-                                <img class="img-thumbnail" id="add-item-image-preview"
-                                    style="margin-top: 2px; width: 25rem; height: 25rem; border: none; border-radius: 0.5em"
+                                <img class="img-thumbnail item-img" id="add-item-image-preview"
                                     src="{{ url_for('static', filename='images/default/no-logo.gif') }}" alt="No Image">
 
                                 <input style="display:none" id="input-image-hidden" name="item_img"
@@ -464,15 +422,13 @@
     </div>
 
     <div class="container-fluid">
-        <div class="row bg-info" style="height:100vh">
-            <nav class="col-sm-3 p-3 bg-light left"
-                style="height: max-height; border-right: 0px solid gray; overflow-y: scroll;">
+        <div class="row bg-info inner-row">
+            <nav class="col-sm-3 p-3 bg-light left-col">
                 <h2>Categories</h2>
                 <ul class="nav nav-pills flex-column">
                     <li class="nav-item">
                         <a class="nav-link {% if ACTIVE_CATEGORY == 'latest' %} active{% endif %}"
-                            href="/category/latest">Latest<span class="fas fa-fire fa-lg pl-2 float-right"
-                                style="color:rgb(255, 60, 0)"></span></a>
+                            href="/category/latest">Latest<span class="fas fa-fire fa-lg pl-2 float-right latest-category-icon"></span></a>
                     </li>
 
                     {% for category in ALL_CATEGORIES %}
@@ -488,10 +444,9 @@
                 <h2 class="font-weight-bol d-flex justify-content-center">{{ ACTIVE_CATEGORY|title }}</h2>
                 <div class="d-inline-flex flex-wrap justify-content-center">
                     {% for item in CATEGORY_ITEMS %}
-                    <div class="card p-3 m-3 shadow" id="{{ item.id }}" style="width: 25em">
-                        <img class="card-img-top img-thumbnail" id='{{item.id}}_img'
-                            src="{{  url_for('static', filename=item.image) }}" alt="Item Image"
-                            style="margin-top: 2px; height: 25rem; border: none; border-radius: 0.5em">
+                    <div class="card p-3 m-3 shadow item" id="{{ item.id }}">
+                        <img class="card-img-top img-thumbnail item-img" id='{{item.id}}_img'
+                            src="{{  url_for('static', filename=item.image) }}" alt="Item Image">
                         <div class="card-body px-2 pb-0">
                             <h3 class="card-title title mb-0" id="{{item.id}}_tit">{{ item.name }}</h3>
 

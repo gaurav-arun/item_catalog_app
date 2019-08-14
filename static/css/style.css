@@ -1,0 +1,102 @@
+li {
+    font-size: 20px;
+}
+
+li:hover {
+    background-color: #b8b8b8;
+    border-radius: 4px;
+}
+
+/* Login modal css */
+.form-elegant .font-small {
+    font-size: 0.8rem;
+}
+
+.form-elegant .z-depth-1a {
+    -webkit-box-shadow: 0 2px 5px 0 rgba(55, 161, 255, 0.26), 0 4px 12px 0 rgba(121, 155, 254, 0.25);
+    box-shadow: 0 2px 5px 0 rgba(55, 161, 255, 0.26), 0 4px 12px 0 rgba(121, 155, 254, 0.25);
+}
+
+.form-elegant .z-depth-1-half,
+.form-elegant .btn:hover {
+    -webkit-box-shadow: 0 5px 11px 0 rgba(85, 182, 255, 0.28), 0 4px 15px 0 rgba(36, 133, 255, 0.15);
+    box-shadow: 0 5px 11px 0 rgba(85, 182, 255, 0.28), 0 4px 15px 0 rgba(36, 133, 255, 0.15);
+}
+
+.form-elegant .modal-header {
+    border-bottom: none;
+}
+
+.modal-dialog .form-elegant .btn .fab {
+    color: #2196f3 !important;
+}
+
+.form-elegant .modal-body,
+.form-elegant .modal-footer {
+    font-weight: 400;
+}
+
+.banner
+{
+    background-color: #3f4959;
+}
+
+.banner-brand
+{
+    color: white; 
+    font-size: xx-large; 
+    height: 50px; 
+    width: 50px;
+}
+
+.banner-buttons-container
+{
+    width:100%; 
+    margin-left: 13rem; 
+    margin-right:2.5rem;
+}
+
+.profile-pic
+{
+    margin-right: 10px; 
+    vertical-align: center;
+}
+
+.item-img
+{
+    margin-top: 2px; 
+    width: 25rem; 
+    height: 25rem; 
+    border: none; 
+    border-radius: 0.5em;
+}
+
+.inner-row
+{
+    height:100vh
+}
+
+.left-col
+{
+    height: max-height;
+    border-right: 0px solid gray; 
+    overflow-y: scroll;
+}
+
+.latest-category-icon
+{
+    color:rgb(255, 60, 0)   
+}
+
+.item
+{
+    width: 25em
+}
+
+.item-img
+{
+    margin-top: 2px; 
+    height: 25rem; 
+    border: none; 
+    border-radius: 0.5em;
+}

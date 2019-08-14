@@ -134,7 +134,9 @@ def update_item(item_id):
         print('Item cannot be updated by this user')
         return redirect(url_for('login'))
 
+    # item_img is empty if user has not uploaded a new image.
     item_img = request.files['item_img']
+
     item_name = request.form['item_name']
     item_cat = request.form['item_cat']
     item_desc = request.form['item_desc']
@@ -145,6 +147,7 @@ def update_item(item_id):
 
     item_img_url = _process_item_image(item_image=item_img,
                                        keyword=item_name,
+                                       current_img_url=item_to_update.image,
                                        feeling_lucky=request.form.getlist('feeling-lucky-check'))
 
     # Delete old item image if a new image is available
@@ -228,7 +231,7 @@ def get_category(category):
         items_in_category = _get_latest_category_items()
     else:
         # Get all item rows in specified category
-        items_in_category = _get_category_items(category=category, sort_on_column=Item.id)
+        items_in_category = _get_category_items(category=category, sort_on_column=Item.last_updated_on)
 
     # If the category does not exist
     # redirect the user to login page.
@@ -488,7 +491,7 @@ def _make_response(msg, error_code):
     return res
 
 
-def _process_item_image(item_image, keyword, feeling_lucky=False):
+def _process_item_image(item_image, keyword, current_img_url=None, feeling_lucky=False):
     """
     Performs necessary steps to save the image file uploaded by the user.
     If user has checked "I'm feeling lucky" checkbox, and has not uploaded
@@ -511,8 +514,9 @@ def _process_item_image(item_image, keyword, feeling_lucky=False):
     :return: url of the image in application's context.
     """
 
-    # Url is updated below as necessary
-    item_img_url = 'images/default/no-logo.gif'
+    # Initially the image url is current image url if item already exists
+    # otherwise no-logo.gif is used.
+    item_img_url = current_img_url or 'images/default/no-logo.gif'
     print("Is Feeling Lucky? ", feeling_lucky)
 
     if item_image:

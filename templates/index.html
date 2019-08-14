@@ -5,12 +5,16 @@
     <title>Catalog App</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+
     <!-- Required for google sign in -->
     <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
     <script>
@@ -32,7 +36,7 @@
         fileinput.click();
     }
 
-    function EditItemModalWindow(button) {
+    function editItemModalWindow(button) {
         itemId = button.dataset.editid;
         item_img_id = '#' + itemId + '_img';
         item_title_id = '#' + itemId + '_tit';
@@ -60,7 +64,9 @@
         $('#add-item-desc').val('');
     }
 
-    function DeleteItemModalWindow(button) {
+    // Updates the content of Delete Item Modal to 
+    // show item name, item category and item id.    
+    function deleteItemModalWindow(button) {
         itemId = button.dataset.deleteid
         item_title = $('#' + itemId + '_tit')[0].innerText;
         item_cat = $('#' + itemId + '_cat')[0].innerText;
@@ -72,9 +78,26 @@
         $('#delItemModal').modal("show")
     }
 
+    // Resets the content of Delete Item Modal.
     function resetDeleteItemModal() {
         $('#del-conf-msg')[0].innerText = ""
         $('#del-item-btn')[0].dataset.deleteid = ""
+    }
+
+    // Handles Login/Logout button click.
+    function handleLogin(button) {
+        // If user is not logged in, toggle the Login Modal window.
+        if (button.dataset.state === "login") {
+            $('#loginModalForm').modal("toggle")
+        }
+        else {
+            // If user is logged in, send a disconnect request to
+            // the server and navigate user back to the login page.
+            $.get("/disconnect", function (data, status) {
+                console.log('Successfully logged out')
+                window.location.href = "/login"
+            });
+        }
     }
 
     // Register for hide modal event and clear all  fields.
@@ -129,25 +152,9 @@
             </button>
             <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
                 data-state="logout"><span class="fas fa-sign-out-alt p-1"></span>Logout</button>
-            <img src="{{ LOGIN_SESSION['picture'] }}" class="rounded-circle float-right profile-pic" width="40px" height="40px">
+            <img src="{{ LOGIN_SESSION['picture'] }}" class="rounded-circle float-right profile-pic" width="40px"
+                height="40px">
             {% endif %}
-            <script>
-                // This function handles login and logout logic for
-                // both Google and Facebook login.
-                function handleLogin(button) {
-                    console.log("state:" + button.dataset.state)
-                    if (button.dataset.state === "login") {
-                        $('#loginModalForm').modal("toggle")
-                    }
-                    else {
-                        $.get("/disconnect", function (data, status) {
-                            console.log('Successfully logged out')
-                            window.location.href = "/login"
-                        });
-                    }
-
-                }
-            </script>
         </div>
     </nav>
     <!-- The Add New Item Modal -->
@@ -237,21 +244,20 @@
                 <!--Login Body-->
                 <div class="modal-body mx-4">
                     <div class="row my-3 d-flex justify-content-center">
-                        <!--Google -->
+                        <!--Google Login-->
+                        <!-- Code reference : https://developers.google.com/identity/sign-in/web/server-side-flow -->
                         <button id="googleSignInButton" type="button"
                             class="btn btn-lg btn-white btn-rounded mr-md-5 z-depth-1a"><i
                                 class="fab fa-google"></i></button>
+
                         <script>
                             $('#googleSignInButton').click(function () {
-                                // signInCallback defined in step 6.
+                                // signInCallback
                                 auth2.grantOfflineAccess().then(signInCallback);
                             });
 
                             function signInCallback(authResult) {
                                 if (authResult['code']) {
-
-                                    // // Hide the sign-in button now that the user is authorized, for example:
-                                    // $('#signinButton').attr('style', 'display: none');
                                     console.log('Executing Sigincallback ...')
 
                                     // Close the login modal and wait for server redirect.
@@ -269,12 +275,6 @@
                                         contentType: 'application/octet-stream; charset=utf-8',
                                         success: function (result) {
                                             console.log('Successfully logged in')
-                                            // $('#loginModalForm').modal("hide")
-                                            // $('#loginLogoutBtn').html("<span class=\"fas fa-sign-out-alt p-1\"></span>Logout")
-                                            // // Set the button state to logout so that when user clicks on it
-                                            // // next time logout is triggered.
-                                            // $('#loginLogoutBtn')[0].dataset.state = 'logout'
-
                                             window.location.href = "/login"
                                         },
                                         processData: false,
@@ -285,9 +285,9 @@
                                 }
                             }
                         </script>
-                        <!--Facebook-->
-                        <!-- Code taken from  https://developers.facebook.com/docs/facebook-login/web/ -->
-                        <!-- Facebook button  https://developers.facebook.com/docs/facebook-login/web/login-button/ -->
+
+                        <!--Facebook Login-->
+                        <!-- Code reference:  https://developers.facebook.com/docs/facebook-login/web/ -->
                         <fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
                         <script>
                             // This is called with the results from from FB.getLoginStatus().
@@ -328,17 +328,7 @@
                                 });
 
                                 // Now that we've initialized the JavaScript SDK, we call 
-                                // FB.getLoginStatus().  This function gets the state of the
-                                // person visiting this page and can return one of three states to
-                                // the callback you provide.  They can be:
-                                //
-                                // 1. Logged into your app ('connected')
-                                // 2. Logged into Facebook, but not your app ('not_authorized')
-                                // 3. Not logged into Facebook and can't tell if they are logged into
-                                //    your app or not.
-                                //
-                                // These three cases are handled in the callback function.
-
+                                // FB.getLoginStatus().  
                                 FB.getLoginStatus(function (response) {
                                     statusChangeCallback(response);
                                 });
@@ -428,7 +418,8 @@
                 <ul class="nav nav-pills flex-column">
                     <li class="nav-item">
                         <a class="nav-link {% if ACTIVE_CATEGORY == 'latest' %} active{% endif %}"
-                            href="/category/latest">Latest<span class="fas fa-fire fa-lg pl-2 float-right latest-category-icon"></span></a>
+                            href="/category/latest">Latest<span
+                                class="fas fa-fire fa-lg pl-2 float-right latest-category-icon"></span></a>
                     </li>
 
                     {% for category in ALL_CATEGORIES %}
@@ -461,9 +452,9 @@
                             <div
                                 style="display: {% if 'username' in LOGIN_SESSION  and item.user_id == LOGIN_SESSION['user_id'] %}block{% else %}none{% endif %}">
                                 <button class="pl-0 card-title btn btn-link btn-sm" data-editid="{{item.id}}"
-                                    onclick="EditItemModalWindow(this)">Edit</button>
+                                    onclick="editItemModalWindow(this)">Edit</button>
                                 <button class="pl-0 card-title btn btn-link btn-sm " data-deleteid="{{item.id}}"
-                                    onclick="DeleteItemModalWindow(this)">Delete</button>
+                                    onclick="deleteItemModalWindow(this)">Delete</button>
                             </div>
                         </div>
                     </div>

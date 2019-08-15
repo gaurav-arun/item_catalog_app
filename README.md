@@ -177,16 +177,23 @@ curl http://localhost:5001/api/v1/categories/skateboard/json
 
 ## CatalogApp Walkthrough
 1. Initially there are no items in the database and User is shown the welcome page.
+![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/db-empty.png)
 
 2. User can login using their Google/Facebook account by clicking on `Login` button.
+![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/login-modal.png)
 
 3. Once user is logged in, they can see `Add Item` button on navbar, their `profile picture` and `Logout` button.
-
-4. All users are allowed to view all the items in the database. But an user is only allowed to Edit/Delete an item created by them.
+![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/logged-in.png)
 
 4. A logged in User can add an item by clicking on `Add Item`. A modal dialog pops up and user needs to fill in the details. User has option to `Upload an image` for the item or simply check `I'm feeling lucky` checkbox to use a random image from Bing Search. Finally, user clicks on `Add` button to add the item.
+![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/add-item-filled.png)
 
 5. A logged in User can edit an item created by them by clicking on `Edit` button. A modal dialog pops up where user can update item details. User has option to `Upload a new image` for the item or simply check `I'm feeling lucky` checkbox to use a random image from Bing Search. Finally, user clicks on `Update` button to save the updates.
+![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/edit-item.png)
 
 6. A logged in User can delete an item created by them by clicking on `Delete` button. A modal dialog pops up for user confirmation.
+![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/delete-item.png)
+
+7. All users are allowed to view all the items in the database. But an user is only allowed to Edit/Delete an item created by them.
+![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/logged-out.png)
 

@@ -12,6 +12,7 @@ Directory  | Content
 `db` | SQLite database
 `static` | Stylesheet and Images
 `templates` | Jinja2 templates
+`docs` | Files for documentation
 `bbid`| [Bulk Bing Image Downloader](https://github.com/grathore07/Bulk-Bing-Image-downloader.git)
 
 #### Bulk Bing Image Downloader 

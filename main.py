@@ -317,8 +317,8 @@ def gconnect():
     if not user_id:
         user_id = _create_user()
     login_session['user_id'] = user_id
-    flash('Google login Successful', 'success')
-    return _make_response('Google login successful', 200)
+    flash('Google Login Successful', 'success')
+    return _make_response('Google Login Successful', 200)
 
 
 @app.route('/gdisconnect')
@@ -387,7 +387,7 @@ def fbconnect():
         user_id = _create_user()
     login_session['user_id'] = user_id
     flash('Facebook Login Successful', 'success')
-    return _make_response('Facebook login successful', 200)
+    return _make_response('Facebook Login Successful', 200)
 
 
 @app.route('/fbdisconnect')

@@ -95,3 +95,12 @@ window.fbAsyncInit = function () {
 };
 ```
 
+## JSON Enpoints
+Catalog App following JSON Endpoints for retrieving data.
+
+Url  | Description | Http Methods
+ ---- | ----------- | ------------
+`/api/v1/catalog/json` | Get all catalog items. | GET 
+`/api/v1/categories/json` | Get all categories. | GET
+`/api/v1/categories/<string:category>/json` | Get all Items under specified category. | GET
+`/api/v1/items/<string:item_id>/json` | Get details of specified item. | GET

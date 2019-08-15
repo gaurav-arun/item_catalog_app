@@ -41,7 +41,7 @@ export SECRET_KEY='your_super_secret_key';
 #### Create Google app and Credentials for Google OAuth Sign-in
 1. Go to https://console.developers.google.com and create a Web Application.
 2. Click on `Create Credentials` button and select OAuth client ID.
-3. Select Application type as `Web Application`
+3. Select Application type as `Web Application`.
 4. Under Authorized JavaScript origins add `http://localhost:5001`. This app runs on port 5001 by default. If you change it, please ensure that this origin url is also updated.
 5. Under Authorized redirect URIs add `http://localhost:5001/login`
 6. Download credentials for this Web Client by clicking on `DOWNLOAD JSON` button on top and save it in the root directory with name `client_secrets.json`.
@@ -63,7 +63,7 @@ export SECRET_KEY='your_super_secret_key';
 8. Under Valid OAuth Redirect URIs add `http://localhost:5001/`. This app runs on port 5001 by default. If you change it, please ensure that this uri is also updated.
 9. Save your changes.
 
-#### Update Web Client to use Google and Facebook Login.
+#### Update Web Client to use Google and Facebook Login
 1. Open `templates/base.html`.
 2. Under the head section, update Google `client_id` with `client_id` from `client_secrets.json` for google sign-in to work.
 ```

@@ -88,6 +88,7 @@ def add_item():
 
     if not item_name or not item_cat or not item_desc:
         print('One or more field(s) are empty!')
+        flash('Add action failed because one or more required field(s) are empty.', 'danger')
         return redirect(url_for('login'))
 
     item_img_url = _process_item_image(item_image=item_img,
@@ -104,7 +105,7 @@ def add_item():
     session.add(new_item)
     session.commit()
 
-    flash('New item "{}" added successfully'.format(item_name))
+    flash('Item "{}" added successfully'.format(item_name), 'success')
 
     return redirect(url_for('get_category', category=item_cat))
 
@@ -143,6 +144,7 @@ def update_item(item_id):
 
     if not item_name or not item_cat or not item_desc:
         print('One or more field(s) are empty!')
+        flash('Update action failed because one or more required field(s) are empty.', 'danger')
         return redirect(url_for('login'))
 
     item_img_url = _process_item_image(item_image=item_img,
@@ -172,6 +174,7 @@ def update_item(item_id):
 
     print('Updated item : {} with id {}'.format(item_to_update.name, item_to_update.id))
 
+    flash('{} updated successfully.'.format(item_name), 'success')
     return redirect(url_for('get_category', category=item_to_update.category))
 
 
@@ -211,6 +214,7 @@ def delete_item(item_id):
     session.commit()
     print('Deleted item : {} with id {}'.format(item_to_delete.name, item_to_delete.id))
 
+    flash('Deleted {} Successfully.'.format(item_to_delete.name), 'success')
     return _make_response('Item deleted successfully', 200)
 
 
@@ -314,7 +318,7 @@ def gconnect():
     if not user_id:
         user_id = _create_user()
     login_session['user_id'] = user_id
-
+    flash('Google login Successful', 'success')
     return _make_response('Google login successful', 200)
 
 
@@ -331,9 +335,11 @@ def gdisconnect():
 
     url = 'https://accounts.google.com/o/oauth2/revoke?token={}'.format(access_token)
     result = requests.get(url)
-    if result.status_code != '200':
-        return _make_response('Failed to disconnect from google.', 400)
 
+    if result.status_code != 200:
+        return _make_response('Failed to disconnect with google.', 400)
+
+    flash('Google Logout Successful', 'success')
     return _make_response('User disconnected from google.', 200)
 
 
@@ -381,7 +387,7 @@ def fbconnect():
     if not user_id:
         user_id = _create_user()
     login_session['user_id'] = user_id
-
+    flash('Facebook Login Successful', 'success')
     return _make_response('Facebook login successful', 200)
 
 
@@ -399,6 +405,7 @@ def fbdisconnect():
     if result.status_code != 200:
         return _make_response('Failed to disconnect from facebook', 401)
 
+    flash('Facebook Logout Successful', 'success')
     return _make_response('Facebook logout successful', 200)
 
 

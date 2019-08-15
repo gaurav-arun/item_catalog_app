@@ -136,7 +136,19 @@
                 });
 
             });
-        });     
+        });
+        
+        // Close the alert message after two seconds
+        (setInterval(
+            function () {
+                if ($('#alert-msg').is(':visible')) {
+                    $("#alert-msg").fadeTo(2000, 500).slideUp(500, function () {
+                        $("alert-msg").slideUp(500);
+                    });
+                }
+            },
+            2000
+        ));
     </script>
 </head>
 
@@ -162,6 +174,22 @@
             {% endif %}
         </div>
     </nav>
+
+    <!-- Flash block start -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    <!-- Categories: success (green), info (blue), warning (yellow), danger (red) -->
+    {% if messages %}
+    <div id="custom-alert-box" class="custom-alert">
+        {% for category, message in messages %}
+        <div id="alert-msg" class="alert alert-{{ category }} alert-dismissible m-0" role="alert">
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+            {{ message }}
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <!-- Flash block end -->
 
     <!-- Contents of the page with left column for vertical navigation menu and right column for displaying items -->
     <div class="container-fluid">
@@ -246,7 +274,7 @@
         aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content form-elegant">
-                
+
                 <!--Login Modal Header-->
                 <div class="modal-header text-center">
                     <h3 class="modal-title w-100 dark-grey-text font-weight-bold my-3 ml-4" id="myModalLabel">
@@ -309,7 +337,6 @@
                             // This is called with the results from from FB.getLoginStatus().
                             function statusChangeCallback(response) {
                                 console.log('statusChangeCallback');
-                                console.log(response);
                                 // The response object is returned with a status field that lets the
                                 // app know the current login status of the person.
                                 // Full docs on the response object can be found in the documentation

@@ -27,123 +27,121 @@
                 });
             });
         }
+
+        // Launches the explorer window for user to select
+        // an image to upload.
+        function handleBrowseClick(input_image) {
+            var fileinput = document.getElementById(input_image);
+            fileinput.click();
+        }
+
+        // Updates the content of Add Item Modal with
+        // corresponding Item details.
+        function editItemModalWindow(button) {
+            itemId = button.dataset.editid;
+            itemImgId = '#' + itemId + '_img';
+            itemTitleId = '#' + itemId + '_tit';
+            itemCatId = '#' + itemId + '_cat';
+            itemDescId = '#' + itemId + '_desc';
+            $('#itemTitle')[0].innerText = "Edit Item"
+            $('#itemForm')[0].action = "/update-item/" + itemId
+            $('#itemImagePreview')[0].src = $(itemImgId)[0].src
+            $('#itemTit').val($(itemTitleId)[0].innerText)
+
+            itemCatnId = $(itemCatId)[0].innerText;
+            itemCat = itemCatnId.slice(0, itemCatnId.lastIndexOf(':') - 1)
+            $('#itemCat').val(itemCat)
+
+            $('#itemDesc').val($(itemDescId)[0].innerText)
+            $('#add-item-btn').html("Update")
+            $('#itemModal').modal("show")
+        }
+
+        // Resets the Add Item Modal to default state.
+        function resetItemModal() {
+            $('#itemTitle')[0].innerText = "Add Item"
+            $('#itemForm')[0].action = "{{ url_for('add_item') }}";
+            $('#itemImagePreview')[0].src = "{{ url_for('static', filename='images/default/no-logo.gif') }}";
+            $('#add-item-btn').html("Add")
+            $('#itemTit').val('');
+            $('#itemCat').val('');
+            $('#itemDesc').val('');
+        }
+
+        // Updates the content of Delete Item Modal to
+        // show item name, item category and item id.
+        function deleteItemModalWindow(button) {
+            itemId = button.dataset.deleteid
+            item_title = $('#' + itemId + '_tit')[0].innerText;
+            item_cat = $('#' + itemId + '_cat')[0].innerText;
+            $('#del-conf-msg')[0].innerText = "Are you sure you want to delete '" + item_title + ", " + item_cat + "'?"
+
+            // Used to make a delete request to the server on button click.
+            $('#del-item-btn')[0].dataset.deleteid = itemId
+
+            $('#delItemModal').modal("show")
+        }
+
+        // Resets the content of Delete Item Modal.
+        function resetDeleteItemModal() {
+            $('#del-conf-msg')[0].innerText = ""
+            $('#del-item-btn')[0].dataset.deleteid = ""
+        }
+
+        // Handles Login/Logout button click.
+        function handleLogin(button) {
+            // If user is not logged in, toggle the Login Modal window.
+            if (button.dataset.state === "login") {
+                $('#loginModalForm').modal("toggle")
+            }
+            else {
+                // If user is logged in, send a disconnect request to
+                // the server and navigate user back to the login page.
+                $.get("/disconnect", function (data, status) {
+                    console.log('Successfully logged out')
+                    window.location.href = "/login"
+                });
+            }
+        }
+
+        // Register for hide modal event and clear all  fields.
+        $(document).ready(function () {
+            $("#itemModal").on('hide.bs.modal', function () {
+                console.log('Hide event: Clearing add item modal')
+                resetItemModal();
+            });
+
+            $("#add-item-btn").click(function () {
+                console.log('Submitting Add item form...')
+                $('#itemForm').submit()
+            });
+
+            $("#delItemModal").on('hide.bs.modal', function () {
+                console.log('Hide event: Clearing delete item modal')
+                resetDeleteItemModal();
+            });
+
+            $("#del-item-btn").click(function () {
+                console.log('Submitting delete request : ' + this.dataset.deleteid)
+                itemId = this.dataset.deleteid
+                itemCatnId = $('#' + itemId + '_cat')[0].innerText;
+                itemCat = itemCatnId.slice(0, itemCatnId.lastIndexOf(':') - 1)
+                $.ajax({
+                    url: '/delete-item/' + itemId,
+                    type: 'DELETE',
+                    success: function (result) {
+                        console.log('Getting ' + '/category/' + itemCat)
+                        window.location.href = '/category/' + itemCat
+                    }
+                });
+
+            });
+        });     
     </script>
 </head>
 
-<script type="text/javascript">
-    // Launches the explorer window for user to select
-    // an image to upload.
-    function handleBrowseClick(input_image) {
-        var fileinput = document.getElementById(input_image);
-        fileinput.click();
-    }
-
-    // Updates the content of Add Item Modal with
-    // corresponding Item details.
-    function editItemModalWindow(button) {
-        itemId = button.dataset.editid;
-        itemImgId = '#' + itemId + '_img';
-        itemTitleId = '#' + itemId + '_tit';
-        itemCatId = '#' + itemId + '_cat';
-        itemDescId = '#' + itemId + '_desc';
-        $('#itemTitle')[0].innerText = "Edit Item"
-        $('#itemForm')[0].action = "/update-item/" + itemId
-        $('#itemImagePreview')[0].src = $(itemImgId)[0].src
-        $('#itemTit').val($(itemTitleId)[0].innerText)
-
-        itemCatnId = $(itemCatId)[0].innerText;
-        itemCat = itemCatnId.slice(0, itemCatnId.lastIndexOf(':') - 1)
-        $('#itemCat').val(itemCat)
-
-        $('#itemDesc').val($(itemDescId)[0].innerText)
-        $('#add-item-btn').html("Update")
-        $('#itemModal').modal("show")
-    }
-
-    // Resets the Add Item Modal to default state.
-    function resetItemModal() {
-        $('#itemTitle')[0].innerText = "Add Item"
-        $('#itemForm')[0].action = "{{ url_for('add_item') }}";
-        $('#itemImagePreview')[0].src = "{{ url_for('static', filename='images/default/no-logo.gif') }}";
-        $('#add-item-btn').html("Add")
-        $('#itemTit').val('');
-        $('#itemCat').val('');
-        $('#itemDesc').val('');
-    }
-
-    // Updates the content of Delete Item Modal to 
-    // show item name, item category and item id.    
-    function deleteItemModalWindow(button) {
-        itemId = button.dataset.deleteid
-        item_title = $('#' + itemId + '_tit')[0].innerText;
-        item_cat = $('#' + itemId + '_cat')[0].innerText;
-        $('#del-conf-msg')[0].innerText = "Are you sure you want to delete '" + item_title + ", " + item_cat + "'?"
-
-        // Used to make a delete request to the server on button click.
-        $('#del-item-btn')[0].dataset.deleteid = itemId
-
-        $('#delItemModal').modal("show")
-    }
-
-    // Resets the content of Delete Item Modal.
-    function resetDeleteItemModal() {
-        $('#del-conf-msg')[0].innerText = ""
-        $('#del-item-btn')[0].dataset.deleteid = ""
-    }
-
-    // Handles Login/Logout button click.
-    function handleLogin(button) {
-        // If user is not logged in, toggle the Login Modal window.
-        if (button.dataset.state === "login") {
-            $('#loginModalForm').modal("toggle")
-        }
-        else {
-            // If user is logged in, send a disconnect request to
-            // the server and navigate user back to the login page.
-            $.get("/disconnect", function (data, status) {
-                console.log('Successfully logged out')
-                window.location.href = "/login"
-            });
-        }
-    }
-
-    // Register for hide modal event and clear all  fields.
-    $(document).ready(function () {
-        $("#itemModal").on('hide.bs.modal', function () {
-            console.log('Hide event: Clearing add item modal')
-            resetItemModal();
-        });
-
-        $("#add-item-btn").click(function () {
-            console.log('Submitting Add item form...')
-            $('#itemForm').submit()
-        });
-
-        $("#delItemModal").on('hide.bs.modal', function () {
-            console.log('Hide event: Clearing delete item modal')
-            resetDeleteItemModal();
-        });
-
-        $("#del-item-btn").click(function () {
-            console.log('Submitting delete request : ' + this.dataset.deleteid)
-            itemId = this.dataset.deleteid
-            itemCatnId = $('#' + itemId + '_cat')[0].innerText;
-            itemCat = itemCatnId.slice(0, itemCatnId.lastIndexOf(':') - 1)
-            $.ajax({
-                url: '/delete-item/' + itemId,
-                type: 'DELETE',
-                success: function (result) {
-                    console.log('Getting ' + '/category/' + itemCat)
-                    window.location.href = '/category/' + itemCat
-                }
-            });
-
-        });
-    });     
-</script>
-</head>
-
 <body>
+    <!-- Sticky navbar on top with Login/Logout and Add Item buttons -->
     <nav class="navbar navbar-expand-sm sticky-top shadow banner">
         <div class="navbar-brand fas fa-scroll banner-brand">
             CatalogApp</div>
@@ -164,19 +162,84 @@
             {% endif %}
         </div>
     </nav>
+
+    <!-- Contents of the page with left column for vertical navigation menu and right column for displaying items -->
+    <div class="container-fluid">
+            <div class="row bg-info inner-row d-none">
+
+                <!-- Column for Vertical navigation menu -->
+                <nav class="col-sm-3 p-3 bg-light left-col">
+                    <h2>Categories</h2>
+                    <ul class="nav nav-pills flex-column">
+                        <!-- A menu item for displaying  most recently added/edited items -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if ACTIVE_CATEGORY == 'latest' %} active{% endif %}"
+                                href="/category/latest">Latest<span
+                                    class="fas fa-fire fa-lg pl-2 float-right latest-category-icon"></span></a>
+                        </li>
+                        <!-- A menu item for each category -->
+                        {% for category in ALL_CATEGORIES %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if category[0] == ACTIVE_CATEGORY %} active{% endif %}"
+                                href="/category/{{category[0]}}">{{ category[0]|title }}<span
+                                    class="badge badge-secondary float-right">{{ category[1] }}</span></a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </nav>
+
+                <!-- Column for displaying items as cards in selected category -->
+                <div class="col-sm-9 p-3 bg-light">
+                    <h2 class="font-weight-bol d-flex justify-content-center">{{ ACTIVE_CATEGORY|title }}</h2>
+                    <div class="d-inline-flex flex-wrap justify-content-center">
+                        
+                        <!-- Buid a card for each item in the selected category -->
+                        {% for item in CATEGORY_ITEMS %}
+                        <div class="card p-3 m-3 shadow item" id="{{ item.id }}">
+                            
+                            <!-- Item image -->
+                            <img class="card-img-top img-thumbnail item-img" id='{{item.id}}_img'
+                                src="{{  url_for('static', filename=item.image) }}" alt="Item Image">
+                            
+                            <!-- Item attributes -->
+                            <div class="card-body px-2 pb-0">
+                                <h3 class="card-title title mb-0" id="{{item.id}}_tit">{{ item.name }}</h3>
     
+                                <h5 class="card-title category small font-italic" id="{{item.id}}_cat">{{ item.category }} :
+                                    {{ item.id }}
+                                </h5>
+    
+                                <p class="card-text text-justify" id="{{item.id}}_desc">
+                                    {{ item.description }}
+                                </p>
+                                
+                                <!-- Add/Edit Item Button. Works only if user is logged in -->
+                                <div style="display: {% if 'username' in LOGIN_SESSION  and item.user_id == LOGIN_SESSION['user_id'] %}block{% else %}none{% endif %}">
+                                    <button class="pl-0 card-title btn btn-link btn-sm" data-editid="{{item.id}}"
+                                        onclick="editItemModalWindow(this)">Edit</button>
+                                    <button class="pl-0 card-title btn btn-link btn-sm " data-deleteid="{{item.id}}"
+                                        onclick="deleteItemModalWindow(this)">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
     <!-- The Item Modal: Used for both Adding Items and Editing/Updating an Item. -->
     <div class="modal fade" id="itemModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
 
-                <!-- Modal Header -->
+                <!-- Item Modal Header -->
                 <div class="modal-header">
                     <h4 id="itemTitle" class="modal-title">Add Item</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
 
-                <!-- Modal body -->
+                <!-- Item Modal Body -->
                 <div class="modal-body">
                     <div class="container">
                         <form method="POST" id="itemForm" action="{{ url_for('add_item') }}"
@@ -226,7 +289,7 @@
                     </div>
                 </div>
 
-                <!-- Modal footer -->
+                <!-- Item Modal Footer -->
                 <div class="modal-footer">
                     <button id="add-item-btn" type="button" class="btn btn-dark" data-dismiss="modal">Add</button>
                     <button id="close-item-btn" type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
@@ -235,13 +298,14 @@
         </div>
     </div>
 
-    <!-- Login Modal: https://mdbootstrap.com/docs/jquery/modals/forms/ -->
+    <!-- Login Modal: For displaying various login options -->
+    <!-- Reference: https://mdbootstrap.com/docs/jquery/modals/forms/ -->
     <div class="modal fade" id="loginModalForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
         aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <!--Login Content-->
             <div class="modal-content form-elegant">
-                <!--Login Header-->
+                
+                <!--Login Modal Header-->
                 <div class="modal-header text-center">
                     <h3 class="modal-title w-100 dark-grey-text font-weight-bold my-3 ml-4" id="myModalLabel">
                         <strong>Sign
@@ -250,7 +314,8 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <!--Login Body-->
+
+                <!--Login Modal Body-->
                 <div class="modal-body mx-4">
                     <div class="row my-3 d-flex justify-content-center">
                         <!--Google Login-->
@@ -275,7 +340,7 @@
                                     // Send the code to the server
                                     $.ajax({
                                         type: 'POST',
-                                        url: '/gconnect?state={{STATE}}',
+                                        url: '/gconnect?state={{ STATE }}',
                                         // Always include an `X-Requested-With` header in every AJAX request,
                                         // to protect against CSRF attacks.
                                         headers: {
@@ -365,7 +430,7 @@
                                     console.log('Successful login for: ' + response.name);
                                     $.ajax({
                                         type: 'POST',
-                                        url: '/fbconnect?state={{STATE}}',
+                                        url: '/fbconnect?state={{ STATE }}',
                                         processData: false,
                                         data: response_token,
                                         contentType: 'application/octet-stream; charset=utf-8',
@@ -384,90 +449,36 @@
                         </script>
                     </div>
                 </div>
-                <!--Footer-->
+
+                <!-- Login Modal Footer-->
                 <div class="modal-footer mx-5 pt-3 mb-1">
                     <p class="font-small grey-text d-flex justify-content-end">Login using Google or Facebook</p>
                 </div>
             </div>
-            <!--/.Content-->
         </div>
     </div>
 
-    <!-- Delete item modal  https://www.w3schools.com/bootstrap4/tryit.asp?filename=trybs_modal_sm&stacked=h -->
-    <!-- The Modal -->
+    <!-- Delete Item Modal -->
+    <!-- Reference: https://www.w3schools.com/bootstrap4/tryit.asp?filename=trybs_modal_sm&stacked=h -->
     <div class="modal fade" id="delItemModal">
         <div class="modal-dialog ">
             <div class="modal-content">
 
-                <!-- Modal Header -->
+                <!-- Delete Item Modal Header -->
                 <div class="modal-header">
                     <h4 class="modal-title">Delete Item</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
 
-                <!-- Modal body -->
+                <!-- Delete Item Modal Body -->
                 <div id='del-conf-msg' class="modal-body font-weight-bold">
                 </div>
 
-                <!-- Modal footer -->
+                <!-- Delete Item Modal footer -->
                 <div class="modal-footer">
                     <button id="del-item-btn" type="button" class="btn btn-dark" data-dismiss="modal"
                         data-deleteid="">Yes</button>
                     <button id="nodel-item-btn" type="button" class="btn btn-dark" data-dismiss="modal">No</button>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <div class="container-fluid">
-        <div class="row bg-info inner-row">
-            <nav class="col-sm-3 p-3 bg-light left-col">
-                <h2>Categories</h2>
-                <ul class="nav nav-pills flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link {% if ACTIVE_CATEGORY == 'latest' %} active{% endif %}"
-                            href="/category/latest">Latest<span
-                                class="fas fa-fire fa-lg pl-2 float-right latest-category-icon"></span></a>
-                    </li>
-
-                    {% for category in ALL_CATEGORIES %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if category[0] == ACTIVE_CATEGORY %} active{% endif %}"
-                            href="/category/{{category[0]}}">{{ category[0]|title }}<span
-                                class="badge badge-secondary float-right">{{ category[1] }}</span></a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </nav>
-            <div class="col-sm-9 p-3 bg-light">
-                <h2 class="font-weight-bol d-flex justify-content-center">{{ ACTIVE_CATEGORY|title }}</h2>
-                <div class="d-inline-flex flex-wrap justify-content-center">
-                    {% for item in CATEGORY_ITEMS %}
-                    <div class="card p-3 m-3 shadow item" id="{{ item.id }}">
-                        <img class="card-img-top img-thumbnail item-img" id='{{item.id}}_img'
-                            src="{{  url_for('static', filename=item.image) }}" alt="Item Image">
-                        <div class="card-body px-2 pb-0">
-                            <h3 class="card-title title mb-0" id="{{item.id}}_tit">{{ item.name }}</h3>
-
-                            <h5 class="card-title category small font-italic" id="{{item.id}}_cat">{{ item.category }} :
-                                {{ item.id }}
-                            </h5>
-
-                            <p class="card-text text-justify" id="{{item.id}}_desc">
-                                {{ item.description }}
-                            </p>
-
-                            <div
-                                style="display: {% if 'username' in LOGIN_SESSION  and item.user_id == LOGIN_SESSION['user_id'] %}block{% else %}none{% endif %}">
-                                <button class="pl-0 card-title btn btn-link btn-sm" data-editid="{{item.id}}"
-                                    onclick="editItemModalWindow(this)">Edit</button>
-                                <button class="pl-0 card-title btn btn-link btn-sm " data-deleteid="{{item.id}}"
-                                    onclick="deleteItemModalWindow(this)">Delete</button>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
                 </div>
             </div>
         </div>

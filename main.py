@@ -25,11 +25,11 @@ app = Flask(__name__)
 APPLICATION_NAME = "Item Catalog Application"
 
 GOOGLE_CLIENT_SECRETS_FILE = 'client_secrets.json'
-GOOGLE_CLIENT_ID = json.loads(open(GOOGLE_CLIENT_SECRETS_FILE, 'r').read())['web']['client_id']
+GOOGLE_CLIENT_ID = utils.get_google_client_id(secret_file=GOOGLE_CLIENT_SECRETS_FILE)
 
 FB_CLIENT_SECRETS_FILE = 'fb_client_secrets.json'
-FB_APP_ID = json.loads(open(FB_CLIENT_SECRETS_FILE, 'r').read())['app_id']
-FB_APP_SECRET = json.loads(open(FB_CLIENT_SECRETS_FILE, 'r').read())['app_secret']
+FB_APP_ID = utils.get_fb_app_id(secret_file=FB_CLIENT_SECRETS_FILE)
+FB_APP_SECRET = utils.get_fb_app_secret()
 
 # Connect to the database and create database session
 engine = create_engine('sqlite:///db/itemcatalog.db', connect_args={'check_same_thread': False})
@@ -62,7 +62,6 @@ def login():
     all_categories = _get_categories()
     # Get most recently added items
     latest_items = _get_latest_category_items()
-
     return render_template('index.html',
                            STATE=login_session['state'],
                            LOGIN_SESSION=login_session,
@@ -446,10 +445,10 @@ def catalog_json():
     :return: All items in item table JSON.
     """
     all_items = _get_all_items()
-    return jsonify(Items=[item.serialize for item in all_items], count=len(all_items))
+    return jsonify(Items=[item.serialize for item in all_items], Count=len(all_items))
 
 
-@app.route('/api/v1/category/json')
+@app.route('/api/v1/categories/json')
 def category_json():
     """
     API for fetching all categories in the Item table.
@@ -459,7 +458,7 @@ def category_json():
     return jsonify(Categories={category: count for category, count in all_categories})
 
 
-@app.route('/api/v1/category/<string:category>/json')
+@app.route('/api/v1/categories/<string:category>/json')
 def category_items_json(category):
     """
     API for fetching all items in the specified category.
@@ -467,10 +466,10 @@ def category_items_json(category):
     :return: All items in specified category as JSON.
     """
     category_items = _get_category_items(category, sort_on_column=Item.id)
-    return jsonify(count=len(category_items), Items=[item.serialize for item in category_items])
+    return jsonify(Count=len(category_items), Items=[item.serialize for item in category_items])
 
 
-@app.route('/api/v1/item/<string:item_id>/json')
+@app.route('/api/v1/items/<string:item_id>/json')
 def item_json(item_id):
     """
     API for fetching an item with specified id
@@ -536,7 +535,7 @@ def _process_item_image(item_image, keyword, current_img_url=None, feeling_lucky
         encoded_file_name = urllib.parse.quote(item_image.filename)
         last_dot_index = encoded_file_name.rfind('.')
         item_image_file_name = encoded_file_name[:last_dot_index] + '_' + \
-                               str(int(time.time())) + encoded_file_name[last_dot_index:]
+            str(int(time.time())) + encoded_file_name[last_dot_index:]
         item_image_file_path = upload_dir / item_image_file_name
         print("image path :", item_image_file_path)
 
@@ -655,6 +654,6 @@ def _get_categories():
 
 
 if __name__ == '__main__':
-    app.secret_key = 'super_secret_key'
+    app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
     app.debug = True
     app.run(host='0.0.0.0', port=5001)

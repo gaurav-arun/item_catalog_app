@@ -104,3 +104,38 @@ Url  | Description | Http Methods
 `/api/v1/categories/json` | Get all categories. | GET
 `/api/v1/categories/<string:category>/json` | Get all Items under specified category. | GET
 `/api/v1/items/<string:item_id>/json` | Get details of specified item. | GET
+
+#### API Enpoint Usage Examples
+Assuming CatalogApp is running on http://localhost:5001
+
+1. Get all categories and number of items under each category.
+```
+curl http://localhost:5001//api/v1/categories/json
+{
+  "Categories": {
+    "birds": 6, 
+    "household": 6, 
+    "pets": 1, 
+    "skateboard": 2, 
+    "stationary": 4, 
+    "wild animal": 10
+  }
+}
+```
+2. Get details of the item with item id 22.
+```
+curl http://localhost:5001/api/v1/items/birds/json
+{
+  "Item": {
+    "category": "wild animal", 
+    "created by": {
+      "id": 2, 
+      "username": "Gaurav Rathore"
+    }, 
+    "description": "Hippopotamus belongs to Wild Animal category.", 
+    "id": 22, 
+    "image": "images/bing/Hippopotamus5.jpg", 
+    "name": "Hippopotamus"
+  }
+}
+```

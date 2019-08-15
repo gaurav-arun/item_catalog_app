@@ -96,7 +96,7 @@ window.fbAsyncInit = function () {
 ```
 
 ## JSON Enpoints
-Catalog App following JSON Endpoints for retrieving data.
+Catalog App supports following JSON Endpoints for retrieving data.
 
 Url  | Description | Http Methods
  ---- | ----------- | ------------

@@ -18,6 +18,7 @@
     <!-- Required for google sign in -->
     <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
     <script>
+        // Init google client
         function start() {
             gapi.load('auth2', function () {
                 auth2 = gapi.auth2.init({
@@ -27,7 +28,8 @@
                 });
             });
         }
-
+        
+        // Init FB client
         window.fbAsyncInit = function () {
             FB.init({
                 appId: '2394225350834497',
@@ -42,9 +44,8 @@
             FB.getLoginStatus(function (response) {
                 statusChangeCallback(response);
             });
-
         };
-        
+
         // Launches the explorer window for user to select
         // an image to upload.
         function handleBrowseClick(input_image) {

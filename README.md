@@ -96,7 +96,7 @@ window.fbAsyncInit = function () {
 ```
 
 ## JSON Enpoints
-Catalog App following JSON Endpoints for retrieving data.
+Catalog App supports following JSON Endpoints for retrieving data.
 
 Url  | Description | Http Methods
  ---- | ----------- | ------------
@@ -104,3 +104,69 @@ Url  | Description | Http Methods
 `/api/v1/categories/json` | Get all categories. | GET
 `/api/v1/categories/<string:category>/json` | Get all Items under specified category. | GET
 `/api/v1/items/<string:item_id>/json` | Get details of specified item. | GET
+
+#### API Enpoint Usage Examples
+Assuming CatalogApp is running on http://localhost:5001
+
+1. Get all categories and number of items under each category.
+```
+curl http://localhost:5001/api/v1/categories/json
+{
+  "Categories": {
+    "birds": 6, 
+    "household": 6, 
+    "pets": 1, 
+    "skateboard": 2, 
+    "stationary": 4, 
+    "wild animal": 10
+  }
+}
+```
+2. Get details of the item with id 22.
+```
+curl http://localhost:5001/api/v1/items/22/json
+{
+  "Item": {
+    "category": "wild animal", 
+    "created by": {
+      "id": 2, 
+      "username": "Gaurav Rathore"
+    }, 
+    "description": "Hippopotamus belongs to Wild Animal category.", 
+    "id": 22, 
+    "image": "images/bing/Hippopotamus5.jpg", 
+    "name": "Hippopotamus"
+  }
+}
+```
+3. Get all items under skateboard category.
+```
+curl http://localhost:5001/api/v1/categories/skateboard/json
+{
+  "Count": 2, 
+  "Items": [
+    {
+      "category": "skateboard", 
+      "created by": {
+        "id": 1, 
+        "username": "Gaurav Rathore"
+      }, 
+      "description": "The skateboard for ninjas.", 
+      "id": 32, 
+      "image": "images/bing/nija_raider.jpg", 
+      "name": "Ninja Raider XXL"
+    }, 
+    {
+      "category": "skateboard"
+      "created by": {
+        "id": 2, 
+        "username": "John Doe"
+      }, 
+      "description": "A skateboard for the millenials.", 
+      "id": 31, 
+      "image": "images/uploads/vola-pro-wax-mx-901-200-g.jpg", 
+      "name": "MX 200 Pro"
+    }
+  ]
+}
+```

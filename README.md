@@ -205,6 +205,8 @@ curl http://localhost:5001/api/v1/categories/skateboard/json
 7. All users are allowed to view all the items in the database. But an user is only allowed to Edit/Delete an item created by them.
 ![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/logged-out.png)
 
+![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/logged-in-2.png)
+
 
 ## Reference
 1. https://github.com/udacity/ud330/tree/master/Lesson4/step2

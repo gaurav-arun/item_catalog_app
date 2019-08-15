@@ -1,486 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <title>Catalog App</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-
-
-    <!-- Required for google sign in -->
-    <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
-    <script>
-        function start() {
-            gapi.load('auth2', function () {
-                auth2 = gapi.auth2.init({
-                    client_id: '109303328989-csn309shgi2vq5idl6gtda1e8s1d5hoh.apps.googleusercontent.com',
-                    // Scopes to request in addition to 'profile' and 'email'
-                    scope: 'openid email'
-                });
-            });
-        }
-
-        // Launches the explorer window for user to select
-        // an image to upload.
-        function handleBrowseClick(input_image) {
-            var fileinput = document.getElementById(input_image);
-            fileinput.click();
-        }
-
-        // Updates the content of Add Item Modal with
-        // corresponding Item details.
-        function editItemModalWindow(button) {
-            itemId = button.dataset.editid;
-            itemImgId = '#' + itemId + '_img';
-            itemTitleId = '#' + itemId + '_tit';
-            itemCatId = '#' + itemId + '_cat';
-            itemDescId = '#' + itemId + '_desc';
-            $('#itemTitle')[0].innerText = "Edit Item"
-            $('#itemForm')[0].action = "/update-item/" + itemId
-            $('#itemImagePreview')[0].src = $(itemImgId)[0].src
-            $('#itemTit').val($(itemTitleId)[0].innerText)
-
-            itemCatnId = $(itemCatId)[0].innerText;
-            itemCat = itemCatnId.slice(0, itemCatnId.lastIndexOf(':') - 1)
-            $('#itemCat').val(itemCat)
-
-            $('#itemDesc').val($(itemDescId)[0].innerText)
-            $('#add-item-btn').html("Update")
-            $('#itemModal').modal("show")
-        }
-
-        // Resets the Add Item Modal to default state.
-        function resetItemModal() {
-            $('#itemTitle')[0].innerText = "Add Item"
-            $('#itemForm')[0].action = "{{ url_for('add_item') }}";
-            $('#itemImagePreview')[0].src = "{{ url_for('static', filename='images/default/no-logo.gif') }}";
-            $('#add-item-btn').html("Add")
-            $('#itemTit').val('');
-            $('#itemCat').val('');
-            $('#itemDesc').val('');
-        }
-
-        // Updates the content of Delete Item Modal to
-        // show item name, item category and item id.
-        function deleteItemModalWindow(button) {
-            itemId = button.dataset.deleteid
-            item_title = $('#' + itemId + '_tit')[0].innerText;
-            item_cat = $('#' + itemId + '_cat')[0].innerText;
-            $('#del-conf-msg')[0].innerText = "Are you sure you want to delete '" + item_title + ", " + item_cat + "'?"
-
-            // Used to make a delete request to the server on button click.
-            $('#del-item-btn')[0].dataset.deleteid = itemId
-
-            $('#delItemModal').modal("show")
-        }
-
-        // Resets the content of Delete Item Modal.
-        function resetDeleteItemModal() {
-            $('#del-conf-msg')[0].innerText = ""
-            $('#del-item-btn')[0].dataset.deleteid = ""
-        }
-
-        // Handles Login/Logout button click.
-        function handleLogin(button) {
-            // If user is not logged in, toggle the Login Modal window.
-            if (button.dataset.state === "login") {
-                $('#loginModalForm').modal("toggle")
-            }
-            else {
-                // If user is logged in, send a disconnect request to
-                // the server and navigate user back to the login page.
-                $.get("/disconnect", function (data, status) {
-                    console.log('Successfully logged out')
-                    window.location.href = "/login"
-                });
-            }
-        }
-
-        // Register for hide modal event and clear all  fields.
-        $(document).ready(function () {
-            $("#itemModal").on('hide.bs.modal', function () {
-                console.log('Hide event: Clearing add item modal')
-                resetItemModal();
-            });
-
-            $("#add-item-btn").click(function () {
-                console.log('Submitting Add item form...')
-                $('#itemForm').submit()
-            });
-
-            $("#delItemModal").on('hide.bs.modal', function () {
-                console.log('Hide event: Clearing delete item modal')
-                resetDeleteItemModal();
-            });
-
-            $("#del-item-btn").click(function () {
-                console.log('Submitting delete request : ' + this.dataset.deleteid)
-                itemId = this.dataset.deleteid
-                itemCatnId = $('#' + itemId + '_cat')[0].innerText;
-                itemCat = itemCatnId.slice(0, itemCatnId.lastIndexOf(':') - 1)
-                $.ajax({
-                    url: '/delete-item/' + itemId,
-                    type: 'DELETE',
-                    success: function (result) {
-                        console.log('Getting ' + '/category/' + itemCat)
-                        window.location.href = '/category/' + itemCat
-                    }
-                });
-
-            });
-        });     
-    </script>
-</head>
-
-<body>
-    <!-- Sticky navbar on top with Login/Logout and Add Item buttons -->
-    <nav class="navbar navbar-expand-sm sticky-top shadow banner">
-        <div class="navbar-brand fas fa-scroll banner-brand">
-            CatalogApp</div>
-        <div class="banner-buttons-container">
-            {% if not LOGIN_SESSION.get('username') %}
-            <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
-                data-state="login"><span class="fas fa-sign-in-alt p-1"></span>Login</button>
-            <img src="{{ url_for('static', filename='images/default/no_user_image.png') }}"
-                class="rounded-circle float-right profile-pic" width="40px" height="40px">
+{% block content %}
+<!-- Display contents if one or more items are avialable in the database -->
+{% if not ALL_CATEGORIES|length %}
+<!-- Show welcome page and inform the user to login and add items. -->
+<div class="jumbotron jumbotron-fluid mt-5">
+    <div class="container-fluid">
+        <h1 class="display-4">Welcome to CatalogApp</h1>
+        <p class="lead">
+            {% if LOGIN_SESSION.get('username')%}
+            You can add items by clicking on <mark>Add Item</mark> button on top.
             {% else %}
-            <button class="btn btn-light ml-5" data-toggle="modal" data-target="#itemModal">
-                <span class="fas fa-plus p-1"></span>Add Item
-            </button>
-            <button id="loginLogoutBtn" class="btn btn-outline-light float-right" onclick="handleLogin(this)"
-                data-state="logout"><span class="fas fa-sign-out-alt p-1"></span>Logout</button>
-            <img src="{{ LOGIN_SESSION['picture'] }}" class="rounded-circle float-right profile-pic" width="40px"
-                height="40px">
+            There are no items to show. Please <mark>Login</mark> to start adding items.
             {% endif %}
-        </div>
+        </p>
+    </div>
+</div>
+{% else %}
+<div class="row bg-info inner-row">
+
+    <!-- Column for Vertical navigation menu -->
+    <nav class="col-sm-3 p-3 bg-light left-col">
+        <h2>Categories</h2>
+        <ul class="nav nav-pills flex-column">
+            <!-- A menu item for displaying  most recently added/edited items -->
+            <li class="nav-item">
+                <a class="nav-link {% if ACTIVE_CATEGORY == 'latest' %} active{% endif %}"
+                    href="/category/latest">Latest<span
+                        class="fas fa-fire fa-lg pl-2 float-right latest-category-icon"></span></a>
+            </li>
+            <!-- A menu item for each category -->
+            {% for category in ALL_CATEGORIES %}
+            <li class="nav-item">
+                <a class="nav-link {% if category[0] == ACTIVE_CATEGORY %} active{% endif %}"
+                    href="/category/{{category[0]}}">{{ category[0]|title }}<span
+                        class="badge badge-secondary float-right">{{ category[1] }}</span></a>
+            </li>
+            {% endfor %}
+        </ul>
     </nav>
 
-    <!-- Contents of the page with left column for vertical navigation menu and right column for displaying items -->
-    <div class="container-fluid">
-            <div class="row bg-info inner-row d-none">
+    <!-- Column for displaying items as cards in selected category -->
+    <div class="col-sm-9 p-3 bg-light">
+        <h2 class="font-weight-bol d-flex justify-content-center">{{ ACTIVE_CATEGORY|title }}</h2>
+        <div class="d-inline-flex flex-wrap justify-content-center">
 
-                <!-- Column for Vertical navigation menu -->
-                <nav class="col-sm-3 p-3 bg-light left-col">
-                    <h2>Categories</h2>
-                    <ul class="nav nav-pills flex-column">
-                        <!-- A menu item for displaying  most recently added/edited items -->
-                        <li class="nav-item">
-                            <a class="nav-link {% if ACTIVE_CATEGORY == 'latest' %} active{% endif %}"
-                                href="/category/latest">Latest<span
-                                    class="fas fa-fire fa-lg pl-2 float-right latest-category-icon"></span></a>
-                        </li>
-                        <!-- A menu item for each category -->
-                        {% for category in ALL_CATEGORIES %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if category[0] == ACTIVE_CATEGORY %} active{% endif %}"
-                                href="/category/{{category[0]}}">{{ category[0]|title }}<span
-                                    class="badge badge-secondary float-right">{{ category[1] }}</span></a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </nav>
+            <!-- Buid a card for each item in the selected category -->
+            {% for item in CATEGORY_ITEMS %}
+            <div class="card p-3 m-3 shadow item" id="{{ item.id }}">
 
-                <!-- Column for displaying items as cards in selected category -->
-                <div class="col-sm-9 p-3 bg-light">
-                    <h2 class="font-weight-bol d-flex justify-content-center">{{ ACTIVE_CATEGORY|title }}</h2>
-                    <div class="d-inline-flex flex-wrap justify-content-center">
-                        
-                        <!-- Buid a card for each item in the selected category -->
-                        {% for item in CATEGORY_ITEMS %}
-                        <div class="card p-3 m-3 shadow item" id="{{ item.id }}">
-                            
-                            <!-- Item image -->
-                            <img class="card-img-top img-thumbnail item-img" id='{{item.id}}_img'
-                                src="{{  url_for('static', filename=item.image) }}" alt="Item Image">
-                            
-                            <!-- Item attributes -->
-                            <div class="card-body px-2 pb-0">
-                                <h3 class="card-title title mb-0" id="{{item.id}}_tit">{{ item.name }}</h3>
-    
-                                <h5 class="card-title category small font-italic" id="{{item.id}}_cat">{{ item.category }} :
-                                    {{ item.id }}
-                                </h5>
-    
-                                <p class="card-text text-justify" id="{{item.id}}_desc">
-                                    {{ item.description }}
-                                </p>
-                                
-                                <!-- Add/Edit Item Button. Works only if user is logged in -->
-                                <div style="display: {% if 'username' in LOGIN_SESSION  and item.user_id == LOGIN_SESSION['user_id'] %}block{% else %}none{% endif %}">
-                                    <button class="pl-0 card-title btn btn-link btn-sm" data-editid="{{item.id}}"
-                                        onclick="editItemModalWindow(this)">Edit</button>
-                                    <button class="pl-0 card-title btn btn-link btn-sm " data-deleteid="{{item.id}}"
-                                        onclick="deleteItemModalWindow(this)">Delete</button>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
+                <!-- Item image -->
+                <img class="card-img-top img-thumbnail item-img" id='{{item.id}}_img'
+                    src="{{  url_for('static', filename=item.image) }}" alt="Item Image">
+
+                <!-- Item attributes -->
+                <div class="card-body px-2 pb-0">
+                    <h3 class="card-title title mb-0" id="{{item.id}}_tit">{{ item.name }}</h3>
+
+                    <h5 class="card-title category small font-italic" id="{{item.id}}_cat">{{ item.category }} :
+                        {{ item.id }}
+                    </h5>
+
+                    <p class="card-text text-justify" id="{{item.id}}_desc">
+                        {{ item.description }}
+                    </p>
+
+                    <!-- Add/Edit Item Button. Works only if user is logged in -->
+                    <div
+                        style="display: {% if 'username' in LOGIN_SESSION  and item.user_id == LOGIN_SESSION['user_id'] %}block{% else %}none{% endif %}">
+                        <button class="pl-0 card-title btn btn-link btn-sm" data-editid="{{item.id}}"
+                            onclick="editItemModalWindow(this)">Edit</button>
+                        <button class="pl-0 card-title btn btn-link btn-sm " data-deleteid="{{item.id}}"
+                            onclick="deleteItemModalWindow(this)">Delete</button>
                     </div>
                 </div>
             </div>
-        </div>
-
-    <!-- The Item Modal: Used for both Adding Items and Editing/Updating an Item. -->
-    <div class="modal fade" id="itemModal">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-
-                <!-- Item Modal Header -->
-                <div class="modal-header">
-                    <h4 id="itemTitle" class="modal-title">Add Item</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-
-                <!-- Item Modal Body -->
-                <div class="modal-body">
-                    <div class="container">
-                        <form method="POST" id="itemForm" action="{{ url_for('add_item') }}"
-                            enctype="multipart/form-data">
-                            <div class="form-group text-center">
-                                <img class="img-thumbnail item-img" id="itemImagePreview"
-                                    src="{{ url_for('static', filename='images/default/no-logo.gif') }}" alt="No Image">
-
-                                <input style="display:none" id="inputImageHidden" name="item-image"
-                                    onchange="document.getElementById('itemImagePreview').src = window.URL.createObjectURL(this.files[0])"
-                                    type="file" accept="image/jpeg, image/png">
-                                <div class="form-check">
-                                    <button class="btn btn-outline-dark btn-sm float-left ml-1" id="itemUploadBtn"
-                                        onclick="handleBrowseClick('inputImageHidden'); return false;">
-                                        Upload an image</button>
-
-                                    <label class="form-check-label float-right mr-4">
-                                        <input name="feeling-lucky-check" type="checkbox" class="form-check-input "
-                                            value="feeling-lucky">I'm
-                                        Feeling Lucky
-                                    </label>
-                                </div>
-                            </div>
-
-
-                            <div class="form-group mt-5">
-                                <label for="itemTit">Name</label>
-                                <input type="text" class="form-control" id="itemTit" name="item-name">
-                                <small id="name-help" class="form-text text-muted">Best item names are concise and a
-                                    noun.</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="itemCat">Category</label>
-                                <input type="text" class="form-control" id="itemCat" name="item-category">
-                                <small id="cat-help" class="form-text text-muted">Category names are case-insensitive. A
-                                    new category will be created if it
-                                    does not exist.</small>
-                            </div>
-                            <div class="form-group">
-                                <label for="itemDesc">Description</label>
-                                <textarea class="form-control" id="itemDesc" rows="3"
-                                    name="item-description"></textarea>
-                                <small id="name-help" class="form-text text-muted">Provide a brief description of this
-                                    item.</small>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Item Modal Footer -->
-                <div class="modal-footer">
-                    <button id="add-item-btn" type="button" class="btn btn-dark" data-dismiss="modal">Add</button>
-                    <button id="close-item-btn" type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
-                </div>
-            </div>
+            {% endfor %}
         </div>
     </div>
-
-    <!-- Login Modal: For displaying various login options -->
-    <!-- Reference: https://mdbootstrap.com/docs/jquery/modals/forms/ -->
-    <div class="modal fade" id="loginModalForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content form-elegant">
-                
-                <!--Login Modal Header-->
-                <div class="modal-header text-center">
-                    <h3 class="modal-title w-100 dark-grey-text font-weight-bold my-3 ml-4" id="myModalLabel">
-                        <strong>Sign
-                            in</strong></h3>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-
-                <!--Login Modal Body-->
-                <div class="modal-body mx-4">
-                    <div class="row my-3 d-flex justify-content-center">
-                        <!--Google Login-->
-                        <!-- Code reference : https://developers.google.com/identity/sign-in/web/server-side-flow -->
-                        <button id="googleSignInButton" type="button"
-                            class="btn btn-lg btn-white btn-rounded mr-md-5 z-depth-1a"><i
-                                class="fab fa-google"></i></button>
-
-                        <script>
-                            $('#googleSignInButton').click(function () {
-                                // signInCallback
-                                auth2.grantOfflineAccess().then(signInCallback);
-                            });
-
-                            function signInCallback(authResult) {
-                                if (authResult['code']) {
-                                    console.log('Executing Sigincallback ...')
-
-                                    // Close the login modal and wait for server redirect.
-                                    $('#loginModalForm').modal("hide")
-
-                                    // Send the code to the server
-                                    $.ajax({
-                                        type: 'POST',
-                                        url: '/gconnect?state={{ STATE }}',
-                                        // Always include an `X-Requested-With` header in every AJAX request,
-                                        // to protect against CSRF attacks.
-                                        headers: {
-                                            'X-Requested-With': 'XMLHttpRequest'
-                                        },
-                                        contentType: 'application/octet-stream; charset=utf-8',
-                                        success: function (result) {
-                                            console.log('Successfully logged in')
-                                            window.location.href = "/login"
-                                        },
-                                        processData: false,
-                                        data: authResult['code']
-                                    });
-                                } else {
-                                    console.log("Server side error.")
-                                }
-                            }
-                        </script>
-
-                        <!--Facebook Login-->
-                        <!-- Code reference:  https://developers.facebook.com/docs/facebook-login/web/ -->
-                        <fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
-                        <script>
-                            // This is called with the results from from FB.getLoginStatus().
-                            function statusChangeCallback(response) {
-                                console.log('statusChangeCallback');
-                                console.log(response);
-                                // The response object is returned with a status field that lets the
-                                // app know the current login status of the person.
-                                // Full docs on the response object can be found in the documentation
-                                // for FB.getLoginStatus().
-                                if (response.status === 'connected') {
-                                    // Logged into your app and Facebook.
-                                    console.log("access_token : " + response.authResponse.accessToken)
-                                    response_token = response.authResponse.accessToken
-                                    sendTokenToServer(response_token);
-                                } else {
-                                    // The person is not logged into your app or we are unable to tell.
-                                    console.log('The person is not logged into your app or we are unable to tell')
-                                }
-                            }
-
-                            // This function is called when someone finishes with the Login
-                            // Button.  See the onlogin handler attached to it in the sample
-                            // code below.
-                            function checkLoginState() {
-                                FB.getLoginStatus(function (response) {
-                                    statusChangeCallback(response);
-                                });
-                            }
-
-                            window.fbAsyncInit = function () {
-                                FB.init({
-                                    appId: '2394225350834497',
-                                    cookie: true,  // enable cookies to allow the server to access 
-                                    // the session
-                                    xfbml: true,  // parse social plugins on this page
-                                    version: 'v4.0' // The Graph API version to use for the call
-                                });
-
-                                // Now that we've initialized the JavaScript SDK, we call 
-                                // FB.getLoginStatus().  
-                                FB.getLoginStatus(function (response) {
-                                    statusChangeCallback(response);
-                                });
-
-                            };
-
-                            // Load the SDK asynchronously
-                            (function (d, s, id) {
-                                var js, fjs = d.getElementsByTagName(s)[0];
-                                if (d.getElementById(id)) return;
-                                js = d.createElement(s); js.id = id;
-                                js.src = "https://connect.facebook.net/en_US/sdk.js";
-                                fjs.parentNode.insertBefore(js, fjs);
-                            }(document, 'script', 'facebook-jssdk'));
-
-                            // Here we run a very simple test of the Graph API after login is
-                            // successful.  See statusChangeCallback() for when this call is made.
-                            function sendTokenToServer(response_token) {
-                                console.log('Welcome!  Fetching your information.... ');
-
-                                // Close the login modal and wait for server redirect.
-                                $('#loginModalForm').modal("hide")
-
-                                FB.api('/me', function (response) {
-                                    console.log('Successful login for: ' + response.name);
-                                    $.ajax({
-                                        type: 'POST',
-                                        url: '/fbconnect?state={{ STATE }}',
-                                        processData: false,
-                                        data: response_token,
-                                        contentType: 'application/octet-stream; charset=utf-8',
-                                        success: function (result) {
-                                            // Handle or verify the server response if necessary.
-                                            if (result) {
-                                                console.log('Login Successful!' + result + 'Redirecting...')
-                                                window.location.href = "/login";
-                                            } else {
-                                                console.log('Failed to make a server-side call. Check your configuration and console.');
-                                            }
-                                        }
-                                    });
-                                });
-                            }
-                        </script>
-                    </div>
-                </div>
-
-                <!-- Login Modal Footer-->
-                <div class="modal-footer mx-5 pt-3 mb-1">
-                    <p class="font-small grey-text d-flex justify-content-end">Login using Google or Facebook</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Item Modal -->
-    <!-- Reference: https://www.w3schools.com/bootstrap4/tryit.asp?filename=trybs_modal_sm&stacked=h -->
-    <div class="modal fade" id="delItemModal">
-        <div class="modal-dialog ">
-            <div class="modal-content">
-
-                <!-- Delete Item Modal Header -->
-                <div class="modal-header">
-                    <h4 class="modal-title">Delete Item</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-
-                <!-- Delete Item Modal Body -->
-                <div id='del-conf-msg' class="modal-body font-weight-bold">
-                </div>
-
-                <!-- Delete Item Modal footer -->
-                <div class="modal-footer">
-                    <button id="del-item-btn" type="button" class="btn btn-dark" data-dismiss="modal"
-                        data-deleteid="">Yes</button>
-                    <button id="nodel-item-btn" type="button" class="btn btn-dark" data-dismiss="modal">No</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
+</div>
+{% endif %}
+{% endblock %}

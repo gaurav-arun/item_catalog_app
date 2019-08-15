@@ -12,11 +12,15 @@ Directory  | Content
 `db` | SQLite database
 `static` | Stylesheet and Images
 `templates` | Jinja2 templates
+`bbid`| [Bulk Bing Image Downloader](https://github.com/grathore07/item_catalog_app.git)
+
+#### Bulk Bing Image Downloader 
+`BBID` provides api for fetching random images from Bing Image Search. It is a fork of original repo [here](https://github.com/ostrolucky/Bulk-Bing-Image-downloader) and is used as a submodule for this project. I added one api to fetch a random image for specified keyword from Bing. It is still a work in progress.
 
 ## Setup  
 #### Clone the project:  
 ```
-git clone https://github.com/grathore07/item_catalog_app.git
+git clone --recursive https://github.com/grathore07/item_catalog_app.git
 ```
 #### Environment
 This project has been tested on **Python v3.5.2**, **virtualenv v16.0.0**

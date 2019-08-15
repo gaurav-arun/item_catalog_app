@@ -139,3 +139,34 @@ curl http://localhost:5001/api/v1/items/22/json
   }
 }
 ```
+3. Get all items under skateboard category.
+```
+curl http://localhost:5001/api/v1/categories/skateboard/json
+{
+  "Count": 2, 
+  "Items": [
+    {
+      "category": "skateboard", 
+      "created by": {
+        "id": 1, 
+        "username": "Gaurav Rathore"
+      }, 
+      "description": "The skateboard for ninjas.", 
+      "id": 32, 
+      "image": "images/bing/nija_raider.jpg", 
+      "name": "Ninja Raider XXL"
+    }, 
+    {
+      "category": "skateboard"
+      "created by": {
+        "id": 2, 
+        "username": "John Doe"
+      }, 
+      "description": "A skateboard for the millenials.", 
+      "id": 31, 
+      "image": "images/uploads/vola-pro-wax-mx-901-200-g.jpg", 
+      "name": "MX 200 Pro"
+    }
+  ]
+}
+```

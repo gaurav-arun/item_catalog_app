@@ -99,6 +99,12 @@ window.fbAsyncInit = function () {
 };
 ```
 
+## Running the app
+The app runs on port 5001 by default. You can change it in `main.py`.
+```
+python3 main.py
+```
+
 ## JSON Enpoints
 Catalog App supports following JSON Endpoints for retrieving data.
 
@@ -176,6 +182,7 @@ curl http://localhost:5001/api/v1/categories/skateboard/json
 ```
 
 ## CatalogApp Walkthrough
+
 1. Initially there are no items in the database and User is shown the welcome page.
 ![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/db-empty.png)
 
@@ -197,3 +204,12 @@ curl http://localhost:5001/api/v1/categories/skateboard/json
 7. All users are allowed to view all the items in the database. But an user is only allowed to Edit/Delete an item created by them.
 ![alt text](https://github.com/grathore07/item_catalog_app/blob/master/docs/logged-out.png)
 
+
+## Reference
+1. https://github.com/udacity/ud330/tree/master/Lesson4/step2
+2. https://developers.google.com/identity/sign-in/web/server-side-flow
+3. https://console.developers.google.com/apis/credentials/oauthclient/109303328989-
+4. https://developers.facebook.com/docs/
+5. https://www.w3schools.com/bootstrap4/default.asp
+6. https://getbootstrap.com/docs/4.0/getting-started/introduction/
+7. Image Source: IMDB, Bing Search

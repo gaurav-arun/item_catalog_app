@@ -110,7 +110,7 @@ Assuming CatalogApp is running on http://localhost:5001
 
 1. Get all categories and number of items under each category.
 ```
-curl http://localhost:5001//api/v1/categories/json
+curl http://localhost:5001/api/v1/categories/json
 {
   "Categories": {
     "birds": 6, 
@@ -122,9 +122,9 @@ curl http://localhost:5001//api/v1/categories/json
   }
 }
 ```
-2. Get details of the item with item id 22.
+2. Get details of the item with id 22.
 ```
-curl http://localhost:5001/api/v1/items/birds/json
+curl http://localhost:5001/api/v1/items/22/json
 {
   "Item": {
     "category": "wild animal", 

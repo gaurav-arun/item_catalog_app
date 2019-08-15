@@ -12,11 +12,15 @@ Directory  | Content
 `db` | SQLite database
 `static` | Stylesheet and Images
 `templates` | Jinja2 templates
+`bbid`| [Bulk Bing Image Downloader](https://github.com/grathore07/Bulk-Bing-Image-downloader.git)
+
+#### Bulk Bing Image Downloader 
+`BBID` provides api for fetching random images from Bing Image Search. It is a fork of original repo [here](https://github.com/ostrolucky/Bulk-Bing-Image-downloader.git) and is used as a submodule for this project. I added one api to fetch a random image for specified keyword from Bing. This image is used as item image if user checks `I'm feeling Lucky` checkbox while adding/updating an item as explained in CatalogApp Walkthrough section.
 
 ## Setup  
 #### Clone the project:  
 ```
-git clone https://github.com/grathore07/item_catalog_app.git
+git clone --recursive https://github.com/grathore07/item_catalog_app.git
 ```
 #### Environment
 This project has been tested on **Python v3.5.2**, **virtualenv v16.0.0**
@@ -170,3 +174,19 @@ curl http://localhost:5001/api/v1/categories/skateboard/json
   ]
 }
 ```
+
+## CatalogApp Walkthrough
+1. Initially there are no items in the database and User is shown the welcome page.
+
+2. User can login using their Google/Facebook account by clicking on `Login` button.
+
+3. Once user is logged in, they can see `Add Item` button on navbar, their `profile picture` and `Logout` button.
+
+4. All users are allowed to view all the items in the database. But an user is only allowed to Edit/Delete an item created by them.
+
+4. A logged in User can add an item by clicking on `Add Item`. A modal dialog pops up and user needs to fill in the details. User has option to `Upload an image` for the item or simply check `I'm feeling lucky` checkbox to use a random image from Bing Search. Finally, user clicks on `Add` button to add the item.
+
+5. A logged in User can edit an item created by them by clicking on `Edit` button. A modal dialog pops up where user can update item details. User has option to `Upload a new image` for the item or simply check `I'm feeling lucky` checkbox to use a random image from Bing Search. Finally, user clicks on `Update` button to save the updates.
+
+6. A logged in User can delete an item created by them by clicking on `Delete` button. A modal dialog pops up for user confirmation.
+

@@ -1,5 +1,8 @@
 __pycache__/*
+bbid/__pycache/*
 .idea/*
 item_catalog_env/*
+static/images/bing/*
+static/images/uploads/*
 client_secrets.json
 fb_client_secrets.json

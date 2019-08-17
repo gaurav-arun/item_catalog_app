@@ -6,7 +6,8 @@ from bbid import bbid
 import time
 
 # Connect to the database and create database session
-engine = create_engine('sqlite:///db/itemcatalog.db', connect_args={'check_same_thread': False})
+engine = create_engine('sqlite:///db/itemcatalog.db',
+                       connect_args={'check_same_thread': False})
 Base.metadata.bind = engine
 
 Base.metadata.drop_all(engine)
@@ -56,18 +57,21 @@ items_list = {
 
 RANDOM_IMAGE_DIR = 'static/images/bing/'
 
+
 def bootstrap():
     user1 = User(name='Gaurav Rathore',
                  email='grathore07@gmail.com',
-                 picture='https://lh5.googleusercontent.com/-iD7vfKDzZ1c/AAAAAAAAAAI/AAAAAAAAB7M/QKn9mgsvqVQ/photo.jpg')
+                 picture='https://lh5.googleusercontent.com/-iD7vfKDzZ1c/'
+                         'AAAAAAAAAAI/AAAAAAAAB7M/QKn9mgsvqVQ/photo.jpg')
 
     session.add(user1)
     session.commit()
 
     user2 = User(name='Gaurav Rathore',
                  email='ga_rathore007@yahoo.in',
-                 picture='https://platform-lookaside.fbsbx.com/platform/profilepic/?'
-                         'asid=10211941360887732&height=200&width=200&ext=1568031179&hash=AeSW6XmrvjqWW7-Q')
+                 picture='https://platform-lookaside.fbsbx.com/platform/'
+                         'profilepic/?asid=10211941360887732&height=200&'
+                         'width=200&ext=1568031179&hash=AeSW6XmrvjqWW7-Q')
 
     session.add(user2)
     session.commit()
@@ -93,7 +97,9 @@ def bootstrap():
         # Find a random image from bing if not
         # provided by the user.
         print('Fetching a random image for "{}" from bing'.format(item))
-        new_image_file_path = bbid.fetch_random_image_from_keyword(item, output_dir=RANDOM_IMAGE_DIR)
+        new_image_file_path = \
+            bbid.fetch_random_image_from_keyword(item,
+                                                 output_dir=RANDOM_IMAGE_DIR)
         if new_image_file_path:
             item_img_url = new_image_file_path[7:]
         else:
@@ -102,7 +108,8 @@ def bootstrap():
 
         item_obj = Item(name=item,
                         category=category,
-                        description=item + " belongs to " + category + " category.",
+                        description=item + " belongs to " + category +
+                        " category.",
                         image=item_img_url,
                         user_id=user_id)
 
@@ -110,12 +117,17 @@ def bootstrap():
         session.commit()
         remaining_items -= 1
         item_end = time.time()
-        print('{:10} : {:5} sec, {:3} items remaining...'.format(item,
-                                                                 item_end - item_start,
-                                                                 remaining_items))
+        print('{:10} : {:5} sec, {:3} '
+              'items remaining...'.format(item,
+                                          item_end - item_start,
+                                          remaining_items))
     all_items_end = time.time()
-    print('\nAdded all items in {} seconds.'.format(all_items_end - all_items_start))
-    print('\nAverage time per item is {} seconds.'.format((all_items_end - all_items_start) / total_items))
+    print('\nAdded all items in {} seconds.'.format(all_items_end -
+                                                    all_items_start))
+    print('\nAverage time per item '
+          'is {} seconds.'.format(
+                                 (all_items_end - all_items_start) /
+                                  total_items))
 
 
 if __name__ == '__main__':

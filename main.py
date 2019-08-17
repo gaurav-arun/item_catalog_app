@@ -6,12 +6,21 @@ import time
 import urllib
 
 import requests
-from flask import Flask, render_template, request, jsonify
-from flask import make_response, redirect, url_for, flash
-from flask import session as login_session
-from oauth2client.client import FlowExchangeError
-from oauth2client.client import flow_from_clientsecrets
+from flask import (Flask,
+                   render_template,
+                   request,
+                   jsonify,
+                   make_response,
+                   redirect,
+                   url_for,
+                   flash,
+                   session as login_session)
+
+from oauth2client.client import (FlowExchangeError,
+                                 flow_from_clientsecrets)
+
 from sqlalchemy import create_engine, desc, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -21,7 +30,6 @@ import utils
 from bbid import bbid
 from database_setup import Base, User, Item
 
-
 app = Flask(__name__)
 csrf = SeaSurf(app)
 csrf.init_app(app)
@@ -29,14 +37,16 @@ csrf.init_app(app)
 APPLICATION_NAME = "Item Catalog Application"
 
 GOOGLE_CLIENT_SECRETS_FILE = 'client_secrets.json'
-GOOGLE_CLIENT_ID = utils.get_google_client_id(secret_file=GOOGLE_CLIENT_SECRETS_FILE)
+GOOGLE_CLIENT_ID = utils.get_google_client_id(
+    secret_file=GOOGLE_CLIENT_SECRETS_FILE)
 
 FB_CLIENT_SECRETS_FILE = 'fb_client_secrets.json'
 FB_APP_ID = utils.get_fb_app_id(secret_file=FB_CLIENT_SECRETS_FILE)
 FB_APP_SECRET = utils.get_fb_app_secret()
 
 # Connect to the database and create database session
-engine = create_engine('sqlite:///db/itemcatalog.db', connect_args={'check_same_thread': False})
+engine = create_engine('sqlite:///db/itemcatalog.db',
+                       connect_args={'check_same_thread': False})
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
@@ -93,12 +103,16 @@ def add_item():
 
     if not item_name or not item_cat or not item_desc:
         print('One or more field(s) are empty!')
-        flash('Add action failed because one or more required field(s) are empty.', 'danger')
+        flash(
+            'Add action failed because one or more '
+            'required field(s) are empty.',
+            'danger')
         return redirect(url_for('login'))
 
     item_img_url = _process_item_image(item_image=item_img,
                                        keyword=item_name,
-                                       feeling_lucky=request.form.getlist('feeling-lucky-check'))
+                                       feeling_lucky=request.form.getlist(
+                                           'feeling-lucky-check'))
 
     # Create a new Item and save it in the database.
     user_id = _get_userid(login_session["email"])
@@ -149,13 +163,17 @@ def update_item(item_id):
 
     if not item_name or not item_cat or not item_desc:
         print('One or more field(s) are empty!')
-        flash('Update action failed because one or more required field(s) are empty.', 'danger')
+        flash(
+            'Update action failed because one or more '
+            'required field(s) are empty.',
+            'danger')
         return redirect(url_for('login'))
 
     item_img_url = _process_item_image(item_image=item_img,
                                        keyword=item_name,
                                        current_img_url=item_to_update.image,
-                                       feeling_lucky=request.form.getlist('feeling-lucky-check'))
+                                       feeling_lucky=request.form.getlist(
+                                           'feeling-lucky-check'))
 
     # Delete old item image if a new image is available
     if item_img_url != item_to_update.image:
@@ -177,7 +195,8 @@ def update_item(item_id):
     session.add(item_to_update)
     session.commit()
 
-    print('Updated item : {} with id {}'.format(item_to_update.name, item_to_update.id))
+    print('Updated item : {} with id {}'.format(item_to_update.name,
+                                                item_to_update.id))
 
     flash('{} updated successfully.'.format(item_name), 'success')
     return redirect(url_for('get_category', category=item_to_update.category))
@@ -217,7 +236,8 @@ def delete_item(item_id):
     # Delete item from database
     session.delete(item_to_delete)
     session.commit()
-    print('Deleted item : {} with id {}'.format(item_to_delete.name, item_to_delete.id))
+    print('Deleted item : {} with id {}'.format(item_to_delete.name,
+                                                item_to_delete.id))
 
     flash('Deleted {} Successfully.'.format(item_to_delete.name), 'success')
     return _make_response('Item deleted successfully', 200)
@@ -227,7 +247,8 @@ def delete_item(item_id):
 def get_category(category):
     """
     View function for rendering category items.
-    :param category: Category chosen by the user. Defaults to 'latest' category.
+    :param category: Category chosen by the user.
+    Defaults to 'latest' category.
     :return:
     """
     # Category is stored in lowercase letters only.
@@ -240,7 +261,9 @@ def get_category(category):
         items_in_category = _get_latest_category_items()
     else:
         # Get all item rows in specified category
-        items_in_category = _get_category_items(category=category, sort_on_column=Item.last_updated_on)
+        items_in_category = \
+            _get_category_items(category=category,
+                                sort_on_column=Item.last_updated_on)
 
     # If the category does not exist
     # redirect the user to login page.
@@ -279,7 +302,9 @@ def gconnect():
     # Check that the access token is valid.
     access_token = credentials.access_token
 
-    url = ('https://www.googleapis.com/oauth2/v2/tokeninfo?access_token={}'.format(access_token))
+    url = (
+        'https://www.googleapis.com/oauth2'
+        '/v2/tokeninfo?access_token={}'.format(access_token))
     result = requests.get(url)
     # If there was an error in the access token info, abort.
     if result.status_code != 200:
@@ -314,13 +339,17 @@ def gconnect():
     res = requests.get(userinfo_url, params=params)
     res_json = res.json()
 
-    login_session['username'] = res_json['name']
-    login_session['picture'] = res_json['picture']
+    # Use section of the email before '@' if name is not available
+    login_session['username'] = res_json.get('name',
+                                             res_json['email'].split('@')[0])
+
+    login_session['picture'] = res_json.get('picture')
     login_session['email'] = res_json['email']
-    # ADD PROVIDER TO LOGIN SESSION
+
+    # Add provider to login session
     login_session['provider'] = 'google'
 
-    # see if user exists, if it doesn't make a new one
+    # See if user exists, if it doesn't make a new one
     user_id = _get_userid(res_json["email"])
     if not user_id:
         user_id = _create_user()
@@ -340,7 +369,8 @@ def gdisconnect():
     if access_token is None:
         return _make_response('User is not connected', 401)
 
-    url = 'https://accounts.google.com/o/oauth2/revoke?token={}'.format(access_token)
+    url = 'https://accounts.google.com/o/oauth2/revoke?token={}'.format(
+        access_token)
     result = requests.get(url)
 
     if result.status_code != 200:
@@ -362,15 +392,18 @@ def fbconnect():
     client_token = request.data.decode('ascii')
     print("Client token received {}".format(client_token))
 
-    url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&' \
-          'client_id={}&client_secret={}&fb_exchange_token={}'.format(FB_APP_ID,
-                                                                      FB_APP_SECRET,
-                                                                      client_token)
+    url = 'https://graph.facebook.com/oauth/access_token' \
+          '?grant_type=fb_exchange_token&' \
+          'client_id={}&client_secret={}&' \
+          'fb_exchange_token={}'.format(FB_APP_ID,
+                                        FB_APP_SECRET,
+                                        client_token)
     result = requests.get(url).json()
     access_token = result['access_token']
 
     # Use token to get user info from API
-    url = 'https://graph.facebook.com/v4.0/me?access_token={}&fields=name,id,email'.format(access_token)
+    url = 'https://graph.facebook.com/v4.0/me?' \
+          'access_token={}&fields=name,id,email'.format(access_token)
     result = requests.get(url)
 
     result_json = result.json()
@@ -383,8 +416,9 @@ def fbconnect():
     login_session['access_token'] = access_token
 
     # Get user picture
-    url = 'https://graph.facebook.com/v4.0/me/picture?access_token={}&redirect=0&height=200&width=200'.format(
-        client_token)
+    url = 'https://graph.facebook.com/v4.0/me/picture?' \
+          'access_token={}&redirect=0&' \
+          'height=200&width=200'.format(client_token)
     result = requests.get(url)
     result_json = result.json()
     login_session['picture'] = result_json["data"]["url"]
@@ -407,7 +441,8 @@ def fbdisconnect():
     facebook_id = login_session['facebook_id']
     # The access token must me included to successfully logout
     access_token = login_session['access_token']
-    url = 'https://graph.facebook.com/{}/permissions?access_token={}'.format(facebook_id, access_token)
+    url = 'https://graph.facebook.com/{}/permissions?access_token={}'.format(
+        facebook_id, access_token)
     result = requests.delete(url)
     if result.status_code != 200:
         return _make_response('Failed to disconnect from facebook', 401)
@@ -453,7 +488,8 @@ def catalog_json():
     :return: All items in item table JSON.
     """
     all_items = _get_all_items()
-    return jsonify(Items=[item.serialize for item in all_items], Count=len(all_items))
+    return jsonify(Items=[item.serialize for item in all_items],
+                   Count=len(all_items))
 
 
 @app.route('/api/v1/categories/json')
@@ -463,7 +499,8 @@ def category_json():
     :return: All categories and count of items as JSON.
     """
     all_categories = _get_categories()
-    return jsonify(Categories={category: count for category, count in all_categories})
+    return jsonify(
+        Categories={category: count for category, count in all_categories})
 
 
 @app.route('/api/v1/categories/<string:category>/json')
@@ -474,7 +511,8 @@ def category_items_json(category):
     :return: All items in specified category as JSON.
     """
     category_items = _get_category_items(category, sort_on_column=Item.id)
-    return jsonify(Count=len(category_items), Items=[item.serialize for item in category_items])
+    return jsonify(Count=len(category_items),
+                   Items=[item.serialize for item in category_items])
 
 
 @app.route('/api/v1/items/<string:item_id>/json')
@@ -485,7 +523,8 @@ def item_json(item_id):
     :return: One item with matching id as JSON.
     """
     item = _get_item(item_id)
-    return jsonify(Item=item.serialize) if item else jsonify({'error': 'Item not found'})
+    return jsonify(Item=item.serialize) if item else jsonify(
+        {'error': 'Item not found'})
 
 
 #######################################
@@ -504,24 +543,28 @@ def _make_response(msg, error_code):
     return res
 
 
-def _process_item_image(item_image, keyword, current_img_url=None, feeling_lucky=False):
+def _process_item_image(item_image, keyword, current_img_url=None,
+                        feeling_lucky=False):
     """
     Performs necessary steps to save the image file uploaded by the user.
     If user has checked "I'm feeling lucky" checkbox, and has not uploaded
     an image, bbid module (Bulk Bing Image Downloader) is used to download
     a random image for the keyword using bing image search.
 
-    Note that bbid usually fails to find an image if keyword is unusual or gibberish.
+    Note that bbid usually fails to find an image if keyword is unusual or
+    gibberish.
 
-    Sometimes bbid fails to find and image even for most common nouns. In such cases
-    a default image is used.
+    Sometimes bbid fails to find and image even for most common nouns.
+    In such cases a default image is used.
 
-    If user has uploaded an image as well as checked the feeling lucky checkbox,
-    image uploaded by the user is retained and bing search for a random image is not
+    If user has uploaded an image as well as checked the feeling lucky
+    checkbox, image uploaded by the user is retained and bing search for a
+    random image is not
     performed.
 
     :param item_image: Image received in the post request.
-    :param keyword: Keyword used to perform a Bing Image Search for a random image.
+    :param keyword: Keyword used to perform a Bing Image Search for a random
+    image.
     :param feeling_lucky: Random image search for keyword is  performed only if
     this is set to true.
     :return: url of the image in application's context.
@@ -539,11 +582,13 @@ def _process_item_image(item_image, keyword, current_img_url=None, feeling_lucky
         if not upload_dir.exists():
             upload_dir.mkdir(parents=True)
 
-        # Save the image with timestamp(for unique filename) to images/uploads directory
+        # Save the image with timestamp(for unique filename)
+        # to images/uploads directory
         encoded_file_name = urllib.parse.quote(item_image.filename)
         last_dot_index = encoded_file_name.rfind('.')
-        item_image_file_name = encoded_file_name[:last_dot_index] + '_' + \
-            str(int(time.time())) + encoded_file_name[last_dot_index:]
+        item_image_file_name = encoded_file_name[:last_dot_index] \
+            + '_' + str(int(time.time())) + \
+            encoded_file_name[last_dot_index:]
         item_image_file_path = upload_dir / item_image_file_name
         print("image path :", item_image_file_path)
 
@@ -555,7 +600,8 @@ def _process_item_image(item_image, keyword, current_img_url=None, feeling_lucky
     elif feeling_lucky:
         # Find a random image from bing if user is feeling lucky!
         print('Fetching a random image for "{}" from bing'.format(keyword))
-        new_image_file_path = bbid.fetch_random_image_from_keyword(keyword=keyword, output_dir=RANDOM_IMAGE_DIR)
+        new_image_file_path = bbid.fetch_random_image_from_keyword(
+            keyword=keyword, output_dir=RANDOM_IMAGE_DIR)
         if new_image_file_path:
             item_img_url = new_image_file_path[7:]
         else:
@@ -590,7 +636,7 @@ def _get_userid(email):
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
-    except:
+    except SQLAlchemyError:
         return None
 
 
@@ -603,7 +649,7 @@ def _get_item(item_id):
     try:
         item = session.query(Item).filter_by(id=item_id).one()
         return item
-    except:
+    except SQLAlchemyError:
         return None
 
 
@@ -615,7 +661,7 @@ def _get_all_items():
     try:
         all_items = session.query(Item).all()
         return all_items
-    except:
+    except SQLAlchemyError:
         return None
 
 
@@ -623,41 +669,49 @@ def _get_category_items(category, sort_on_column=Item.last_updated_on):
     """
     Queries the database to fetch all the Items in the specified category.
     :param category: Category of the items.
-    :param sort_on_column: Sorts the result based on specified column in Item table.
+    :param sort_on_column: Sorts the result based on specified column in
+    Item table.
     Default is last_updated_on column.
     :return: Sorted list of Items.
     """
     try:
-        items_in_category = session.query(Item).filter_by(category=category).order_by(desc(sort_on_column)).all()
+        items_in_category = session.query(Item).filter_by(
+            category=category).order_by(desc(sort_on_column)).all()
         return items_in_category
-    except:
+    except SQLAlchemyError:
         return None
 
 
-def _get_latest_category_items(sort_on_column=Item.last_updated_on, limit=MAX_ITEMS_IN_LATEST_CATEGORY):
+def _get_latest_category_items(sort_on_column=Item.last_updated_on,
+                               limit=MAX_ITEMS_IN_LATEST_CATEGORY):
     """
     Queries the database to fetch a list of most recently added/updated items.
-    :param sort_on_column: Sorts the result based on specified column in Item table.
+    :param sort_on_column: Sorts the result based on specified column in
+    Item table.
     Default is last_updated_on column.
     :param limit: Maximum number of items to fetch.
     :return: Sorted list of most recently added/updated items.
     """
     try:
-        latest_items = session.query(Item).order_by(desc(sort_on_column)).limit(limit)
+        latest_items = session.query(Item).order_by(
+            desc(sort_on_column)).limit(limit)
         return latest_items
-    except:
+    except SQLAlchemyError:
         return None
 
 
 def _get_categories():
     """
     Queries the database to fetch a list of categories.
-    :return: A list of tuple containing [(<category_name>, <count_of_items_in_category>), ...]
+    :return: A list of tuple containing [(<category_name>,
+    <count_of_items_in_category>), ...]
     """
     try:
-        all_categories = session.query(Item.category, func.count(Item.category)).group_by(Item.category).all()
+        all_categories = session.query(Item.category,
+                                       func.count(Item.category)).group_by(
+            Item.category).all()
         return all_categories
-    except:
+    except SQLAlchemyError:
         return None
 
 

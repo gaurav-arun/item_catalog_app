@@ -45,8 +45,9 @@ FB_APP_ID = utils.get_fb_app_id(secret_file=FB_CLIENT_SECRETS_FILE)
 FB_APP_SECRET = utils.get_fb_app_secret()
 
 # Connect to the database and create database session
-engine = create_engine('sqlite:///db/itemcatalog.db',
-                       connect_args={'check_same_thread': False})
+# engine = create_engine('sqlite:///db/itemcatalog.db',
+#                        connect_args={'check_same_thread': False})
+engine = create_engine("postgresql://vagrant:vagrant@localhost/itemcatalog")
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
@@ -717,5 +718,5 @@ def _get_categories():
 
 if __name__ == '__main__':
     app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
-    app.debug = False
-    app.run(host='0.0.0.0', port=5001)
+    app.debug = True
+    app.run(host='0.0.0.0', port=5000)

@@ -43,6 +43,7 @@ class Item(Base):
         }
 
 
-engine = create_engine('sqlite:///db/itemcatalog.db',
-                       connect_args={'check_same_thread': False})
+# engine = create_engine('sqlite:///db/itemcatalog.db',
+#                        connect_args={'check_same_thread': False})
+engine = create_engine("postgresql://vagrant:vagrant@localhost/itemcatalog")
 Base.metadata.create_all(engine)

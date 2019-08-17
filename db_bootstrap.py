@@ -6,8 +6,9 @@ from bbid import bbid
 import time
 
 # Connect to the database and create database session
-engine = create_engine('sqlite:///db/itemcatalog.db',
-                       connect_args={'check_same_thread': False})
+# engine = create_engine('sqlite:///db/itemcatalog.db',
+#                        connect_args={'check_same_thread': False})
+engine = create_engine("postgresql://vagrant:vagrant@localhost/itemcatalog")
 Base.metadata.bind = engine
 
 Base.metadata.drop_all(engine)

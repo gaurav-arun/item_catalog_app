@@ -68,7 +68,8 @@ export SECRET_KEY='your_super_secret_key';
 8. Under Valid OAuth Redirect URIs add `http://localhost:5001/`. This app runs on port 5001 by default. If you change it, please ensure that this uri is also updated.
 9. Save your changes.
 
-#### Update Web Client to use Google and Facebook Login
+#### Update Web Client to use Google and Facebook Login(OPTIONAL)
+This is an optional step because these fields are automatically updated by jinja.
 1. Open `templates/base.html`.
 2. Under the head section, update Google `client_id` with `client_id` from `client_secrets.json` for google sign-in to work.
 ```

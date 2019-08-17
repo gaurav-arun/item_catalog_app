@@ -21,10 +21,10 @@ Directory  | Content
 ## Setup  
 #### Clone the project:  
 ```
-git clone --recursive https://github.com/grathore07/item_catalog_app.git
+git clone https://github.com/grathore07/item_catalog_app.git
 ```
 #### Environment
-This project has been tested on **Python v3.5.2**, **virtualenv v16.0.0**
+This project has been tested on **Python v3.5.2**, **virtualenv v16.0.0**, **Ubuntu 16.04LTS**
 1. Install virtualenv if required
 ```
 sudo pip install virtualenv==16.0.0

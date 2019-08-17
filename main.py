@@ -15,12 +15,16 @@ from sqlalchemy import create_engine, desc, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 
+from flask_seasurf import SeaSurf
+
 import utils
 from bbid import bbid
 from database_setup import Base, User, Item
 
 
 app = Flask(__name__)
+csrf = SeaSurf(app)
+csrf.init_app(app)
 
 APPLICATION_NAME = "Item Catalog Application"
 

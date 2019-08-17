@@ -232,6 +232,7 @@
                     <div class="container">
                         <form method="POST" id="itemForm" action="{{ url_for('add_item') }}"
                             enctype="multipart/form-data">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                             <div class="form-group text-center">
                                 <img class="img-thumbnail item-img" id="itemImagePreview"
                                     src="{{ url_for('static', filename='images/default/no-logo.gif') }}" alt="No Image">
@@ -332,7 +333,8 @@
                                         // Always include an `X-Requested-With` header in every AJAX request,
                                         // to protect against CSRF attacks.
                                         headers: {
-                                            'X-Requested-With': 'XMLHttpRequest'
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            "X-CSRFToken": "{{ csrf_token() }}"
                                         },
                                         contentType: 'application/octet-stream; charset=utf-8',
                                         success: function (result) {
@@ -401,6 +403,9 @@
                                     $.ajax({
                                         type: 'POST',
                                         url: '/fbconnect?state={{ STATE }}',
+                                        headers: {
+                                            "X-CSRFToken": "{{ csrf_token() }}"
+                                        },
                                         processData: false,
                                         data: response_token,
                                         contentType: 'application/octet-stream; charset=utf-8',

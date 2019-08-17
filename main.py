@@ -67,6 +67,8 @@ def login():
     # Get most recently added items
     latest_items = _get_latest_category_items()
     return render_template('index.html',
+                           GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID,
+                           FB_APP_ID=FB_APP_ID,
                            STATE=login_session['state'],
                            LOGIN_SESSION=login_session,
                            ACTIVE_CATEGORY=LATEST_CATEGORY,
@@ -247,6 +249,8 @@ def get_category(category):
         return redirect(url_for('login'))
 
     return render_template('index.html',
+                           GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID,
+                           FB_APP_ID=FB_APP_ID,
                            STATE=login_session['state'],
                            LOGIN_SESSION=login_session,
                            ACTIVE_CATEGORY=category,

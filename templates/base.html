@@ -22,7 +22,7 @@
         function start() {
             gapi.load('auth2', function () {
                 auth2 = gapi.auth2.init({
-                    client_id: '109303328989-csn309shgi2vq5idl6gtda1e8s1d5hoh.apps.googleusercontent.com',
+                    client_id: "{{ GOOGLE_CLIENT_ID }}",
                     // Scopes to request in addition to 'profile' and 'email'
                     scope: 'openid email'
                 });
@@ -32,7 +32,7 @@
         // Init FB client
         window.fbAsyncInit = function () {
             FB.init({
-                appId: '2394225350834497',
+                appId: "{{ FB_APP_ID }}",
                 cookie: true,  // enable cookies to allow the server to access 
                 // the session
                 xfbml: true,  // parse social plugins on this page

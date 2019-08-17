@@ -146,6 +146,9 @@
                 itemCat = itemCatnId.slice(0, itemCatnId.lastIndexOf(':') - 1)
                 $.ajax({
                     url: '/delete-item/' + itemId,
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token() }}"
+                    },
                     type: 'DELETE',
                     success: function (result) {
                         console.log('Getting ' + '/category/' + itemCat)
